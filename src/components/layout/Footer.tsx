@@ -5,8 +5,9 @@ export function Footer() {
   return (
     <footer
       id="main-footer"
-      className="w-full bg-[#111827] lg:h-[313px] pt-[48px] pb-8 lg:pb-0 overflow-hidden text-[#9CA3AF]"
+      className="w-full bg-[#111827] lg:h-[313px] pt-[48px] pb-8 lg:pb-0 overflow-hidden text-[#9CA3AF] relative"
     >
+      <span id="support" className="sr-only" />
       <div className="w-full max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-0">
         {/* 4 Columns Grid: 280px each, gap 32px */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[32px] justify-between">

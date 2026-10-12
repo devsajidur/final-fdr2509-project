@@ -6,6 +6,7 @@ import { FeaturesSection } from '@/components/sections/FeaturesSection';
 import { GallerySection } from '@/components/sections/GallerySection';
 import { CallToActionSection } from '@/components/sections/CallToActionSection';
 import { Footer } from '@/components/layout/Footer';
+import { InteractionModals } from '@/components/ui/InteractionModals';
 
 export default function HomePage() {
   return (
@@ -33,6 +34,9 @@ export default function HomePage() {
 
       {/* 07. Footer: Y=2258px, H=313px */}
       <Footer />
+
+      {/* 08. Accessible Interactive Dialog Modals */}
+      <InteractionModals />
     </div>
   );
 }

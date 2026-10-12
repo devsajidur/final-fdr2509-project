@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { openMackModal, ModalType } from './InteractionModals';
 
 export type ButtonVariant = 'primary-black' | 'secondary-outline' | 'primary-white' | 'cta-outline';
 
@@ -9,6 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   exactHeight?: string | number;
   children: React.ReactNode;
   className?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
 }
 
 export function Button({
@@ -18,6 +22,7 @@ export function Button({
   exactHeight,
   children,
   className = '',
+  onClick,
   ...props
 }: ButtonProps) {
   const baseStyles =
@@ -51,10 +56,28 @@ export function Button({
     customStyle.height = typeof exactHeight === 'number' ? `${exactHeight}px` : exactHeight;
   }
 
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
+    if (onClick) onClick(e);
+    if (href) {
+      let modal: ModalType = null;
+      if (href === '#configure') modal = 'configure';
+      else if (href === '#brochure') modal = 'brochure';
+      else if (href === '#contact-dealer') modal = 'contact';
+      else if (href === '#find-dealer') modal = 'find-dealer';
+      else if (href === '#request-quote') modal = 'quote';
+
+      if (modal) {
+        e.preventDefault();
+        openMackModal(modal);
+      }
+    }
+  };
+
   if (href) {
     return (
       <a
         href={href}
+        onClick={handleClick}
         className={`${baseStyles} ${variantStyles} ${className}`}
         style={customStyle}
       >
@@ -65,6 +88,7 @@ export function Button({
 
   return (
     <button
+      onClick={handleClick}
       className={`${baseStyles} ${variantStyles} ${className}`}
       style={customStyle}
       {...props}

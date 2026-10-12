@@ -7,8 +7,9 @@ export function HeroSection() {
   return (
     <section
       id="hero-section"
-      className="w-full bg-[#FFFFFF] lg:h-[600px] flex items-center justify-center overflow-hidden py-12 lg:py-0"
+      className="w-full bg-[#FFFFFF] lg:h-[600px] flex items-center justify-center overflow-hidden py-12 lg:py-0 relative"
     >
+      <span id="trucks" className="sr-only" />
       <div className="w-full max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-0">
         <div className="grid grid-cols-1 lg:grid-cols-[584px_584px] gap-[32px] lg:gap-[48px] items-center">
           {/* Left Column: Width 584px */}

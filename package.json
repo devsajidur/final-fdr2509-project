@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "playwright test",
+    "compare": "node scripts/real-visual-comparison.js"
   },
   "dependencies": {
     "next": "16.4.0",
