@@ -86,7 +86,27 @@ export function Header() {
         </nav>
 
         {/* Right Actions Desktop */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center space-x-[20px]">
+          <button
+            type="button"
+            aria-label="Search"
+            className="text-[#111827] hover:text-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] p-1"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
           <Button
             variant="primary-black"
             exactWidth={153.33}
