@@ -8,6 +8,18 @@ import { Button } from '@/components/ui/Button';
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+        const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
+        toggleBtn?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
   return (
     <header
       id="main-header"
@@ -90,18 +102,20 @@ export function Header() {
         <div className="flex md:hidden items-center">
           <button
             type="button"
+            id="mobile-menu-toggle-btn"
+            aria-controls="mobile-navigation-drawer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px]"
             aria-expanded={mobileMenuOpen}
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <line x1="4" y1="6" x2="20" y2="6" />
                 <line x1="4" y1="12" x2="20" y2="12" />
                 <line x1="4" y1="18" x2="20" y2="18" />
@@ -113,17 +127,20 @@ export function Header() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#FFFFFF] border-b border-[#F3F4F6] px-6 py-4 shadow-lg">
-          <nav className="flex flex-col space-y-4">
+        <div
+          id="mobile-navigation-drawer"
+          className="md:hidden bg-[#FFFFFF] border-b border-[#F3F4F6] px-6 py-4 shadow-lg transition-all duration-200 ease-in-out"
+        >
+          <nav className="flex flex-col space-y-4" aria-label="Mobile Navigation">
             {navigationItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-[16px] leading-[24px] py-1 ${
+                className={`text-[16px] leading-[24px] py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] ${
                   item.isActive
                     ? 'font-medium text-[#111827]'
-                    : 'font-normal text-[#4B5563]'
+                    : 'font-normal text-[#4B5563] hover:text-[#111827]'
                 }`}
               >
                 {item.label}
