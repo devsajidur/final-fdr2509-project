@@ -10,17 +10,17 @@ function FeatureIcon({ type }: { type: FeatureItemData['iconType'] }) {
     case 'safety':
       return (
         <svg
-          width="26"
-          height="26"
+          width="32"
+          height="32"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.2"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          {/* Shield check vector matching Figma */}
+          {/* Shield check vector */}
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
@@ -28,35 +28,42 @@ function FeatureIcon({ type }: { type: FeatureItemData['iconType'] }) {
     case 'connected':
       return (
         <svg
-          width="26"
-          height="26"
+          width="32"
+          height="32"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.2"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          {/* Wifi telematics vector matching Figma */}
+          {/* Telematics / radar signal vector */}
           <path d="M5 12.55a11 11 0 0 1 14.08 0" />
           <path d="M1.42 9a16 16 0 0 1 21.16 0" />
           <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-          <line x1="12" y1="20" x2="12.01" y2="20" strokeWidth="2.5" />
+          <line x1="12" y1="20" x2="12.01" y2="20" strokeWidth="3" />
         </svg>
       );
     case 'comfort':
       return (
         <svg
-          width="26"
-          height="26"
+          width="32"
+          height="32"
           viewBox="0 0 24 24"
-          fill="currentColor"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           aria-hidden="true"
         >
-          {/* User / driver silhouette matching Figma reference */}
-          <circle cx="12" cy="7" r="4" />
-          <path d="M12 13c-4.42 0-8 2.24-8 5v2h16v-2c0-2.76-3.58-5-8-5z" />
+          {/* Ergonomic truck seating / steering wheel */}
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="3" />
+          <path d="m4.93 4.93 4.24 4.24" />
+          <path d="m14.83 9.17 4.24-4.24" />
+          <path d="M12 15v7" />
         </svg>
       );
   }

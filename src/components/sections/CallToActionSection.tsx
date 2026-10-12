@@ -10,7 +10,7 @@ export function CallToActionSection() {
     >
       <div className="w-full max-w-[896px] mx-auto px-4 sm:px-6 flex flex-col items-center">
         {/* Heading: 30px, 700, 36px line-height, #FFFFFF */}
-        <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#FFFFFF] tracking-tight">
+        <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#FFFFFF]">
           {callToActionContent.title}
         </h2>
 

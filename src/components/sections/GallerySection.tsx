@@ -10,7 +10,7 @@ export function GallerySection() {
     >
       <div className="w-full max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-0 flex flex-col items-center">
         {/* Title: 30px, 700, 36px line-height, center, margin bottom 48px */}
-        <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#111827] text-center tracking-tight mb-[48px]">
+        <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#111827] text-center mb-[48px]">
           {galleryContent.title}
         </h2>
 

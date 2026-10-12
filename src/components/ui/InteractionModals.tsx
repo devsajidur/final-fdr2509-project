@@ -239,8 +239,8 @@ SUPPORT & SERVICE:
                 <li>Axle: {selectedAxle} (GVWR 80,000 lbs)</li>
               </ul>
               {configSaved && (
-                <p className="mt-2 text-green-600 font-medium text-[13px]">
-                  ✓ Configuration saved to local session.
+                <p className="mt-2 text-gray-700 font-medium text-[13px]">
+                  Selection shown above. Not saved — it will be cleared when this dialog closes.
                 </p>
               )}
             </div>
@@ -251,7 +251,7 @@ SUPPORT & SERVICE:
                 onClick={() => setConfigSaved(true)}
                 className="w-full sm:flex-1 py-2.5 px-4 bg-black text-white font-semibold rounded-[6px] hover:bg-gray-800 transition-colors"
               >
-                Save Configuration
+                Confirm Selection
               </button>
               <a
                 href="#specifications-section"
@@ -332,17 +332,17 @@ SUPPORT & SERVICE:
             </p>
 
             {contactSubmitted ? (
-              <div className="mt-6 p-6 bg-green-50 rounded-[8px] text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center font-bold text-xl">
-                  ✓
+              <div className="mt-6 p-6 bg-gray-50 border border-gray-200 rounded-[8px] text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-200 text-gray-700 mx-auto flex items-center justify-center font-bold text-xl">
+                  i
                 </div>
-                <h3 className="text-[18px] font-bold text-gray-900 mt-3">Inquiry Form Prepared</h3>
+                <h3 className="text-[18px] font-bold text-gray-900 mt-3">Inquiry Not Sent</h3>
                 <p className="text-[14px] text-gray-600 mt-2">
                   Thank you, <strong>{contactName}</strong>. Your request regarding{' '}
-                  <strong>{contactType}</strong> has been prepared for transmission to your local Mack dealer.
+                  <strong>{contactType}</strong> was <strong>not sent</strong>: this demo is not connected to a dealer system, and your details were not stored.
                 </p>
                 <p className="text-[12px] text-gray-500 mt-3">
-                  (Production note: Live CRM lead injection requires enterprise backend API credentials).
+                  Please call Mack OneCall at 1-800-866-1177 to reach a dealer.
                 </p>
                 <button
                   type="button"
@@ -415,7 +415,7 @@ SUPPORT & SERVICE:
                     type="submit"
                     className="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-[6px] hover:bg-gray-800 transition-colors"
                   >
-                    Submit Dealer Inquiry
+                    Review Inquiry
                   </button>
                 </div>
               </form>
@@ -441,7 +441,7 @@ SUPPORT & SERVICE:
                   return;
                 }
                 setDealerSearchResult(
-                  `Displaying authorized Mack dealer network options for region "${dealerZip}". Official 24/7 National Dispatch Hotline: 1-800-866-1177 (Mack OneCall). Over 430 dealership centers operate nationwide.`
+                  `Dealer search is not connected in this build, so no results are shown for "${dealerZip}". Call Mack OneCall at 1-800-866-1177 for the nearest location.`
                 );
               }}
               className="mt-6 space-y-4"
@@ -498,17 +498,17 @@ SUPPORT & SERVICE:
             </p>
 
             {quoteSubmitted ? (
-              <div className="mt-6 p-6 bg-green-50 rounded-[8px] text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center font-bold text-xl">
-                  ✓
+              <div className="mt-6 p-6 bg-gray-50 border border-gray-200 rounded-[8px] text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-200 text-gray-700 mx-auto flex items-center justify-center font-bold text-xl">
+                  i
                 </div>
-                <h3 className="text-[18px] font-bold text-gray-900 mt-3">Quote Request Prepared</h3>
+                <h3 className="text-[18px] font-bold text-gray-900 mt-3">Quote Request Not Submitted</h3>
                 <p className="text-[14px] text-gray-600 mt-2">
-                  Thank you. A fleet quotation inquiry for <strong>{quoteCompany}</strong> ({quoteFleetSize})
-                  has been formatted and saved.
+                  The quotation inquiry for <strong>{quoteCompany}</strong> ({quoteFleetSize}) was{' '}
+                  <strong>not submitted</strong>: no quotation backend is connected, and your details were not stored.
                 </p>
                 <p className="text-[12px] text-gray-500 mt-3">
-                  (Production note: Live quotation calculation requires enterprise pricing engine integration).
+                  Please contact an authorized Mack dealer or call 1-800-866-1177.
                 </p>
                 <button
                   type="button"
@@ -581,7 +581,7 @@ SUPPORT & SERVICE:
                     type="submit"
                     className="w-full py-2.5 px-4 bg-black text-white font-semibold rounded-[6px] hover:bg-gray-800 transition-colors"
                   >
-                    Generate Fleet Quote Request
+                    Review Quote Request
                   </button>
                 </div>
               </form>

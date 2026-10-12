@@ -15,12 +15,12 @@ export function HeroSection() {
           {/* Left Column: Width 584px */}
           <div className="flex flex-col justify-center w-full lg:w-[584px]">
             {/* Eyebrow: 14px, 500, line-height 20px, letter-spacing 0.35px, #6B7280 */}
-            <span className="text-[14px] font-medium leading-[20px] tracking-[0.35px] text-[#6B7280] uppercase mb-[12px]">
+            <span className="text-[14px] font-medium leading-[20px] tracking-[0.35px] text-[#6B7280] mb-[12px]">
               {heroContent.eyebrow}
             </span>
 
             {/* Heading: 48px, 700, line-height 48px, #111827, 2 lines */}
-            <h1 className="text-[36px] sm:text-[44px] lg:text-[48px] font-bold leading-[1.05] lg:leading-[48px] text-[#111827] max-w-[480px] tracking-tight">
+            <h1 className="text-[36px] sm:text-[44px] lg:text-[48px] font-bold leading-[1.05] lg:leading-[48px] text-[#111827] max-w-[480px]">
               {heroContent.title}
             </h1>
 
