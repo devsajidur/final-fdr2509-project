@@ -23,8 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${montserrat.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-[#F9FAFB] text-[#111827]">
+    <html lang="en" className={`${montserrat.variable} h-full antialiased`} suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col font-sans bg-[#F9FAFB] text-[#111827]"
+      >
         {children}
       </body>
     </html>
