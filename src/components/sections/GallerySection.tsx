@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import { galleryContent } from '@/data/site-content';
+import { triggerMackModal } from '@/components/ui/InteractionModals';
 
 export function GallerySection() {
   return (
@@ -16,10 +19,20 @@ export function GallerySection() {
 
         {/* 3 Images Grid: Gap 24px, total 1216px, height ~219px */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px] w-full max-w-[1216px] justify-items-center">
-          {galleryContent.items.map((item) => (
+          {galleryContent.items.map((item, index) => (
             <div
               key={item.id}
-              className="relative w-full max-w-[389.34px] h-[219px] rounded-[8px] overflow-hidden shrink-0 group"
+              role="button"
+              tabIndex={0}
+              onClick={() => triggerMackModal('lightbox', { lightboxIndex: index })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  triggerMackModal('lightbox', { lightboxIndex: index });
+                }
+              }}
+              aria-label={`Enlarge photo: ${item.title}`}
+              className="relative w-full max-w-[389.34px] h-[219px] rounded-[8px] overflow-hidden shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
               style={{
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
               }}
@@ -32,6 +45,17 @@ export function GallerySection() {
                 sizes="(max-width: 768px) 100vw, 390px"
                 className="object-cover object-center rounded-[8px] transition-transform duration-300 group-hover:scale-105"
               />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 duration-200">
+                <span className="bg-white/90 text-black text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 backdrop-blur-xs">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="11" y1="8" x2="11" y2="14" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                  </svg>
+                  <span>Enlarge</span>
+                </span>
+              </div>
             </div>
           ))}
         </div>

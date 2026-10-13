@@ -7,6 +7,7 @@ import { GallerySection } from '@/components/sections/GallerySection';
 import { CallToActionSection } from '@/components/sections/CallToActionSection';
 import { Footer } from '@/components/layout/Footer';
 import { InteractionModals } from '@/components/ui/InteractionModals';
+import { MobileAppNavBar } from '@/components/layout/MobileAppNavBar';
 
 export default function HomePage() {
   return (
@@ -37,6 +38,9 @@ export default function HomePage() {
 
       {/* 08. Accessible Interactive Dialog Modals */}
       <InteractionModals />
+
+      {/* 09. Native-Feeling Mobile App Docked Bottom Navigation (hidden on desktop) */}
+      <MobileAppNavBar />
     </div>
   );
 }

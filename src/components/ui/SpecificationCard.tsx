@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { SpecificationItem } from '@/types';
+import { triggerMackModal } from '@/components/ui/InteractionModals';
 
 interface SpecificationCardProps {
   spec: SpecificationItem;
@@ -28,7 +31,17 @@ function SpecIcon({ type }: { type: SpecificationItem['iconType'] }) {
 export function SpecificationCard({ spec }: SpecificationCardProps) {
   return (
     <div
-      className="bg-[#FFFFFF] rounded-[8px] card-shadow p-[24px] flex flex-col justify-start w-full lg:w-[280px] lg:h-[196px] shrink-0"
+      role="button"
+      tabIndex={0}
+      onClick={() => triggerMackModal('spec-detail', { selectedSpec: spec.iconType })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          triggerMackModal('spec-detail', { selectedSpec: spec.iconType });
+        }
+      }}
+      aria-label={`View full technical data for ${spec.title}`}
+      className="bg-[#FFFFFF] rounded-[8px] card-shadow p-[24px] flex flex-col justify-start w-full lg:w-[280px] lg:h-[196px] shrink-0 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-black group"
       style={{
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
       }}

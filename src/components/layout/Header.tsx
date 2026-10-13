@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { navigationItems } from '@/data/site-content';
 import { Button } from '@/components/ui/Button';
 import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
+import { triggerMackModal } from '@/components/ui/InteractionModals';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -74,7 +75,8 @@ export function Header() {
           <button
             type="button"
             aria-label="Search"
-            className="text-[#4B5563] hover:text-[#111827] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px]"
+            onClick={() => triggerMackModal('search')}
+            className="text-[#4B5563] hover:text-[#111827] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer"
           >
             <svg
               width="16"
@@ -149,7 +151,21 @@ export function Header() {
                 {item.label}
               </a>
             ))}
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  triggerMackModal('search');
+                }}
+                className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-[6px] border border-gray-300 text-[14px] font-medium text-[#111827] bg-[#F9FAFB] hover:bg-gray-100 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="7" cy="7" r="5" />
+                  <line x1="10.5" y1="10.5" x2="15" y2="15" />
+                </svg>
+                <span>Search Models & Specs (Ctrl+K)</span>
+              </button>
               <Button
                 variant="primary-black"
                 exactWidth="100%"
