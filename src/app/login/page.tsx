@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
+import { HeaderTruckLogoIcon, GoogleIcon } from '@/components/ui/Icons';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, loginAsDemo } = useAuth();
+  const { user, login, loginWithGoogle, loginAsDemo } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +26,23 @@ export default function LoginPage() {
       }
     }
   }, [user, router]);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const res = await loginWithGoogle();
+      if (res.success) {
+        router.push('/dashboard');
+      } else {
+        setErrorMessage(res.error || 'Google Sign-In was unable to complete.');
+      }
+    } catch {
+      setErrorMessage('Google authentication encountered an error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,8 +109,28 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Prominent Google Authentication Button */}
+          <div className="mb-5">
+            <button
+              id="google-signin-btn"
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-[10px] bg-white hover:bg-gray-100 text-[#1F2937] font-semibold text-[15px] border border-gray-300 shadow-md transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+            >
+              <GoogleIcon className="w-5 h-5 shrink-0" />
+              <span>Continue with Google</span>
+            </button>
+          </div>
+
+          <div className="relative flex py-2 items-center mb-5">
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="shrink mx-4 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Or Use Instant Demo Access</span>
+            <div className="flex-grow border-t border-white/10"></div>
+          </div>
+
           {/* Quick Demo 1-Click Cards */}
-          <div className="mb-6 p-4 rounded-[12px] bg-white/[0.03] border border-white/10">
+          <div className="mb-5 p-4 rounded-[12px] bg-white/[0.03] border border-white/10">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[12px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -136,9 +173,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="relative flex py-2 items-center mb-6">
+          <div className="relative flex py-2 items-center mb-5">
             <div className="flex-grow border-t border-white/10"></div>
-            <span className="shrink mx-4 text-gray-500 text-[12px] uppercase tracking-wider">Or Sign in with Credentials</span>
+            <span className="shrink mx-4 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Or Sign in with Credentials</span>
             <div className="flex-grow border-t border-white/10"></div>
           </div>
 

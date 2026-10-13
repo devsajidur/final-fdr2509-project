@@ -1,22 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { navigationItems } from '@/data/site-content';
 import { Button } from '@/components/ui/Button';
-import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
+import { HeaderTruckLogoIcon, GoogleIcon } from '@/components/ui/Icons';
 import { triggerMackModal } from '@/components/ui/InteractionModals';
 import { smoothScrollTo } from '@/lib/smoothScroll';
+import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
+  const router = useRouter();
+  const { user, loginWithGoogle, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
+  const portalDropdownRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-        const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
-        toggleBtn?.focus();
+      if (e.key === 'Escape') {
+        if (portalOpen) setPortalOpen(false);
+        if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+          const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
+          toggleBtn?.focus();
+        }
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        portalDropdownRef.current &&
+        !portalDropdownRef.current.contains(e.target as Node)
+      ) {
+        setPortalOpen(false);
       }
     };
 
@@ -48,12 +66,14 @@ export function Header() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('click', handleAnchorClick);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('click', handleAnchorClick);
     };
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, portalOpen]);
 
   return (
     <header
@@ -108,8 +128,8 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Right Actions Desktop: Search + Contact Dealer (Figma: left: 1030.67px, width: 185.33px, gap: 32px) */}
-        <div className="hidden md:flex items-center space-x-[32px]">
+        {/* Right Actions Desktop: Search + Fleet Portal + Contact Dealer */}
+        <div className="hidden md:flex items-center space-x-[20px] lg:space-x-[24px]">
           <button
             type="button"
             aria-label="Search"
@@ -130,6 +150,231 @@ export function Header() {
               />
             </svg>
           </button>
+
+          {/* Fleet Portal Account Popover Trigger */}
+          <div className="relative" ref={portalDropdownRef}>
+            {user ? (
+              <button
+                id="header-fleet-portal-btn"
+                type="button"
+                onClick={() => setPortalOpen(!portalOpen)}
+                className="flex items-center space-x-2 py-1.5 px-3 rounded-[6px] bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#111827] text-[14px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black cursor-pointer"
+                aria-expanded={portalOpen}
+                aria-haspopup="true"
+              >
+                <div className="w-[22px] h-[22px] rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-bold">
+                  {user.displayName.charAt(0)}
+                </div>
+                <span className="max-w-[120px] truncate">{user.displayName.split(' ')[0]}</span>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className={`transition-transform duration-150 ${portalOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                id="header-fleet-portal-btn"
+                type="button"
+                onClick={() => setPortalOpen(!portalOpen)}
+                className="flex items-center space-x-1.5 py-1.5 px-3 rounded-[6px] bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#111827] text-[14px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black cursor-pointer"
+                aria-expanded={portalOpen}
+                aria-haspopup="true"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Fleet Portal</span>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className={`transition-transform duration-150 ${portalOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            )}
+
+            {/* Dropdown Menu */}
+            {portalOpen && (
+              <div
+                id="header-portal-popover"
+                className="absolute right-0 top-[48px] w-[310px] bg-[#111827] text-white border border-white/15 rounded-[12px] shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+              >
+                {user ? (
+                  <>
+                    <div className="pb-3 border-b border-white/10">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-[34px] h-[34px] rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[14px] shrink-0">
+                          {user.displayName.charAt(0)}
+                        </div>
+                        <div className="truncate">
+                          <div className="font-semibold text-[14px] text-white truncate">{user.displayName}</div>
+                          <div className="text-[11px] text-gray-400 truncate">{user.email}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between text-[11px] text-gray-400 bg-white/[0.04] px-2.5 py-1 rounded">
+                        <span className="truncate">{user.company || 'Commercial Partner'}</span>
+                        <span className="font-mono text-amber-400 font-semibold">{user.role === 'admin' ? 'CORPORATE' : 'FLEET TIER'}</span>
+                      </div>
+                    </div>
+
+                    <div className="py-2.5 space-y-1 text-[13px]">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setPortalOpen(false)}
+                        className="flex items-center justify-between px-2.5 py-2 rounded-[6px] hover:bg-white/10 text-gray-200 hover:text-white transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>📊</span>
+                          <span>My Fleet Quotes & Inquiries</span>
+                        </span>
+                        <span className="text-[11px] text-gray-400">View →</span>
+                      </Link>
+
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setPortalOpen(false)}
+                        className="flex items-center justify-between px-2.5 py-2 rounded-[6px] hover:bg-white/10 text-gray-200 hover:text-white transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🧮</span>
+                          <span>TCO & Fuel Savings Estimator</span>
+                        </span>
+                        <span className="text-[11px] text-amber-400 font-mono font-semibold">TCO</span>
+                      </Link>
+
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setPortalOpen(false)}
+                        className="flex items-center justify-between px-2.5 py-2 rounded-[6px] hover:bg-white/10 text-gray-200 hover:text-white transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🚚</span>
+                          <span>Schedule Dealer Test Drive</span>
+                        </span>
+                        <span className="text-[11px] text-blue-400 font-mono">BOOK</span>
+                      </Link>
+
+                      {user.role === 'admin' && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setPortalOpen(false)}
+                          className="flex items-center justify-between px-2.5 py-2 rounded-[6px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-medium transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>👑</span>
+                            <span>Corporate Admin Console</span>
+                          </span>
+                          <span className="text-[11px] text-amber-400">Manage →</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[12px]">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setPortalOpen(false);
+                          await logout();
+                          router.push('/');
+                        }}
+                        className="text-red-400 hover:text-red-300 transition-colors cursor-pointer py-1 font-medium"
+                      >
+                        Sign Out
+                      </button>
+                      <Link
+                        href="/login"
+                        onClick={() => setPortalOpen(false)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        Switch Account
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="pb-3 border-b border-white/10">
+                      <div className="text-[11px] font-mono uppercase text-amber-400 font-bold tracking-wider">
+                        Commercial Client Access
+                      </div>
+                      <div className="text-[15px] font-bold text-white mt-0.5">Mack Fleet Portal</div>
+                      <div className="text-[12px] text-gray-400 mt-0.5">
+                        Manage active quotes, test drives, and saved specifications.
+                      </div>
+                    </div>
+
+                    <div className="pt-3 space-y-2.5">
+                      {/* 1-Click Google Sign In */}
+                      <button
+                        id="header-google-signin-btn"
+                        type="button"
+                        onClick={async () => {
+                          setPortalOpen(false);
+                          const res = await loginWithGoogle();
+                          if (res.success) {
+                            router.push('/dashboard');
+                          }
+                        }}
+                        className="w-full flex items-center justify-center gap-2.5 py-2.5 px-3 rounded-[8px] bg-white hover:bg-gray-100 text-[#1F2937] font-semibold text-[13px] transition-all active:scale-[0.99] cursor-pointer shadow"
+                      >
+                        <GoogleIcon className="w-4 h-4 shrink-0" />
+                        <span>Continue with Google</span>
+                      </button>
+
+                      <Link
+                        href="/login"
+                        onClick={() => setPortalOpen(false)}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] bg-white/10 hover:bg-white/20 text-white font-medium text-[13px] transition-colors"
+                      >
+                        <span>Sign In with Email</span>
+                        <span className="text-gray-400">→</span>
+                      </Link>
+
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[12px]">
+                        <Link
+                          href="/register"
+                          onClick={() => setPortalOpen(false)}
+                          className="text-amber-400 hover:text-amber-300 font-medium underline underline-offset-2"
+                        >
+                          Register Fleet Account
+                        </Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setPortalOpen(false)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          Admin Panel 👑
+                        </Link>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           <Button
             variant="primary-black"
             exactWidth={153.33}
@@ -226,8 +471,27 @@ export function Header() {
             {/* Multi-Page Portals (Customer & Admin) */}
             <div className="pt-3 border-t border-gray-200 flex flex-col space-y-2">
               <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center">
-                Enterprise & Customer Access
+                Enterprise & Customer Fleet Access
               </div>
+
+              {/* 1-Click Google Sign-In on mobile */}
+              {!user && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setMobileMenuOpen(false);
+                    const res = await loginWithGoogle();
+                    if (res.success) {
+                      router.push('/dashboard');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2.5 py-2.5 px-3 rounded-[8px] bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 font-semibold text-[13px] shadow-sm transition-all active:scale-98 cursor-pointer"
+                >
+                  <GoogleIcon className="w-4 h-4 shrink-0" />
+                  <span>Continue with Google</span>
+                </button>
+              )}
+
               <div className="grid grid-cols-2 gap-2">
                 <Link
                   href="/dashboard"
@@ -235,7 +499,7 @@ export function Header() {
                   className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-[6px] bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[13px] border border-blue-200 transition-colors active:scale-98"
                 >
                   <span>👤</span>
-                  <span>Customer</span>
+                  <span>{user ? 'My Portal' : 'Customer'}</span>
                 </Link>
                 <Link
                   href="/admin"
@@ -246,13 +510,28 @@ export function Header() {
                   <span>Admin</span>
                 </Link>
               </div>
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-1.5 text-[13px] font-medium text-gray-600 hover:text-black"
-              >
-                Sign In / Switch Accounts →
-              </Link>
+
+              {user ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setMobileMenuOpen(false);
+                    await logout();
+                    router.push('/');
+                  }}
+                  className="w-full text-center py-1.5 text-[13px] font-medium text-red-500 hover:text-red-700 cursor-pointer"
+                >
+                  Sign Out ({user.displayName})
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-1.5 text-[13px] font-medium text-gray-600 hover:text-black"
+                >
+                  Sign In / Switch Accounts →
+                </Link>
+              )}
             </div>
           </nav>
         </div>

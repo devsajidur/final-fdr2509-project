@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
+import { HeaderTruckLogoIcon, GoogleIcon } from '@/components/ui/Icons';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +24,23 @@ export default function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleGoogleSignUp = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const res = await loginWithGoogle();
+      if (res.success) {
+        router.push('/dashboard');
+      } else {
+        setErrorMessage(res.error || 'Google sign-up failed.');
+      }
+    } catch {
+      setErrorMessage('Google sign-up encountered an issue. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +101,26 @@ export default function RegisterPage() {
             <p className="text-[14px] text-gray-400 mt-1">
               Access real-time quotation tracking, test drive booking, and custom specs.
             </p>
+          </div>
+
+          {/* Quick Google Sign-Up Button */}
+          <div className="mb-5">
+            <button
+              id="google-signup-btn"
+              type="button"
+              onClick={handleGoogleSignUp}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-[10px] bg-white hover:bg-gray-100 text-[#1F2937] font-semibold text-[15px] border border-gray-300 shadow-md transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+            >
+              <GoogleIcon className="w-5 h-5 shrink-0" />
+              <span>Sign Up with Google (1-Click)</span>
+            </button>
+          </div>
+
+          <div className="relative flex py-2 items-center mb-5">
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="shrink mx-4 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Or Register with Commercial Details</span>
+            <div className="flex-grow border-t border-white/10"></div>
           </div>
 
           {errorMessage && (
