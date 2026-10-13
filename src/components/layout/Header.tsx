@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { navigationItems } from '@/data/site-content';
 import { Button } from '@/components/ui/Button';
+import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,21 +39,7 @@ export function Header() {
           >
             {/* Logo Box: 32x32px, bg #000000, radius 4px */}
             <div className="w-[32px] h-[32px] bg-[#000000] rounded-[4px] flex items-center justify-center shrink-0">
-              <svg
-                width="17.5"
-                height="14"
-                viewBox="0 0 17.5 14"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-[#FFFFFF]"
-                aria-hidden="true"
-              >
-                {/* Official Mack Truck Silhouette Vector from Figma SVG */}
-                <path
-                  d="M1.312 0C0.588 0 0 0.5879 0 1.3125V10.0625C0 10.7871 0.588 11.375 1.312 11.375H1.75C1.75 12.8242 2.926 14 4.375 14C5.824 14 7 12.8242 7 11.375H10.5C10.5 12.8242 11.676 14 13.125 14C14.574 14 15.75 12.8242 15.75 11.375H16.625C17.109 11.375 17.5 10.984 17.5 10.5C17.5 10.016 17.109 9.625 16.625 9.625V7.875V7V6.4887C16.625 6.0238 16.442 5.5781 16.114 5.25L14 3.1363C13.672 2.8082 13.226 2.625 12.761 2.625H11.375V1.3125C11.375 0.5879 10.787 0 10.062 0H1.312ZM11.375 4.375H12.761L14.875 6.4887V7H11.375V4.375ZM3.062 11.375C3.062 11.0269 3.201 10.6931 3.447 10.4469C3.693 10.2008 4.027 10.0625 4.375 10.0625C4.723 10.0625 5.057 10.2008 5.303 10.4469C5.549 10.6931 5.688 11.0269 5.688 11.375C5.688 11.7231 5.549 12.0569 5.303 12.3031C5.057 12.5492 4.723 12.6875 4.375 12.6875C4.027 12.6875 3.693 12.5492 3.447 12.3031C3.201 12.0569 3.062 11.7231 3.062 11.375ZM13.125 10.0625C13.473 10.0625 13.807 10.2008 14.053 10.4469C14.299 10.6931 14.438 11.0269 14.438 11.375C14.438 11.7231 14.299 12.0569 14.053 12.3031C13.807 12.5492 13.473 12.6875 13.125 12.6875C12.777 12.6875 12.443 12.5492 12.197 12.3031C11.951 12.0569 11.812 11.7231 11.812 11.375C11.812 11.0269 11.951 10.6931 12.197 10.4469C12.443 10.2008 12.777 10.0625 13.125 10.0625Z"
-                  fill="#FFFFFF"
-                />
-              </svg>
+              <HeaderTruckLogoIcon />
             </div>
 
             {/* Brand text: offset 40px from group origin (8px gap after 32px box) */}

@@ -64,6 +64,7 @@ export function HeroSection() {
               <Image
                 src={heroContent.image.src}
                 alt={heroContent.image.alt}
+                title={heroContent.image.title}
                 width={584}
                 height={384}
                 priority

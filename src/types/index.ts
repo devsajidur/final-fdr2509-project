@@ -21,6 +21,8 @@ export interface FeatureItemData {
 
 export interface GalleryItemData {
   id: string;
+  name?: string;
+  title?: string;
   src: string;
   alt: string;
   width: number;

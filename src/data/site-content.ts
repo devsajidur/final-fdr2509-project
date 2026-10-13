@@ -23,6 +23,8 @@ export const heroContent = {
     width: 213.33,
   },
   image: {
+    name: 'Mack Anthem Highway Driving',
+    title: 'Mack Anthem Silver Highway Truck',
     src: '/images/mack-anthem-hero.png',
     alt: 'Mack Anthem silver highway truck driving along an open highway',
     width: 584,
@@ -98,6 +100,8 @@ export const galleryContent = {
   items: [
     {
       id: 'gallery-interior',
+      name: 'Mack Anthem Cabin Interior',
+      title: 'Cabin Interior',
       src: '/images/mack-interior.png',
       alt: 'Mack Anthem modern truck cabin interior with dashboard and steering wheel',
       width: 389.33,
@@ -106,6 +110,8 @@ export const galleryContent = {
     },
     {
       id: 'gallery-engine',
+      name: 'Mack MP8 Engine Compartment',
+      title: 'Engine Compartment',
       src: '/images/mack-engine.png',
       alt: 'Mack MP8 13L engine compartment showing high-performance mechanical powertrain',
       width: 389.33,
@@ -114,6 +120,8 @@ export const galleryContent = {
     },
     {
       id: 'gallery-rear',
+      name: 'Mack Anthem Rear View',
+      title: 'Rear Exterior',
       src: '/images/mack-rear.png',
       alt: 'Rear view of Mack truck showing dual rear axles, taillights, and trailer linkage on highway',
       width: 389.34,
