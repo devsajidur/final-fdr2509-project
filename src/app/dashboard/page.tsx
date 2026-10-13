@@ -244,7 +244,7 @@ export default function CustomerDashboardPage() {
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-[8px] transition-all cursor-pointer shadow-lg active:scale-98 text-[14px]"
               >
-                1-Click Demo Login as Customer
+                Use the demo customer account
               </button>
               <Link
                 href="/login"
@@ -326,7 +326,7 @@ export default function CustomerDashboardPage() {
                 {(user.email.includes('gmail') || user.displayName.includes('Google') || user.uid.includes('google')) && (
                   <span className="inline-flex items-center gap-1.5 text-[11px] bg-white/10 text-white px-2.5 py-0.5 rounded-full border border-white/20 font-medium">
                     <GoogleIcon className="w-3.5 h-3.5" />
-                    <span>Verified Google Fleet Partner</span>
+                    <span>Signed in with Google</span>
                   </span>
                 )}
               </div>

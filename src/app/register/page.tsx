@@ -113,7 +113,7 @@ export default function RegisterPage() {
               className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-[10px] bg-white hover:bg-gray-100 text-[#1F2937] font-semibold text-[15px] border border-gray-300 shadow-md transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
             >
               <GoogleIcon className="w-5 h-5 shrink-0" />
-              <span>Sign Up with Google (1-Click)</span>
+              <span>Sign Up with Google</span>
             </button>
           </div>
 

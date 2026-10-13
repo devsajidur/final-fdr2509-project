@@ -125,18 +125,18 @@ export default function LoginPage() {
 
           <div className="relative flex py-2 items-center mb-5">
             <div className="flex-grow border-t border-white/10"></div>
-            <span className="shrink mx-4 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Or Use Instant Demo Access</span>
+            <span className="shrink mx-4 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Or use a demo account</span>
             <div className="flex-grow border-t border-white/10"></div>
           </div>
 
-          {/* Quick Demo 1-Click Cards */}
+          {/* Demo accounts */}
           <div className="mb-5 p-4 rounded-[12px] bg-white/[0.03] border border-white/10">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[12px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                Quick Demo 1-Click Access
+                Demo Accounts
               </span>
-              <span className="text-[11px] text-gray-400">Instant Demo Login</span>
+              <span className="text-[11px] text-gray-400">No password needed</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button

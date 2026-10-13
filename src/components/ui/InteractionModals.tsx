@@ -803,7 +803,7 @@ SUPPORT & SERVICE:
                       if (res.isRealtime) {
                         showToast('✓ Quote saved to Firebase Firestore in real-time!');
                       } else {
-                        showToast('✓ Quote saved locally (Safe Demo Mode).');
+                        showToast('✓ Quote saved on this device.');
                       }
                     }}
                     className="mt-5 space-y-4"
@@ -927,7 +927,7 @@ SUPPORT & SERVICE:
                       if (res.isRealtime) {
                         showToast('✓ Lead sent to Firebase Firestore in real-time!');
                       } else {
-                        showToast('✓ Lead registered locally (Safe Demo Mode).');
+                        showToast('✓ Message saved on this device.');
                       }
                     }}
                     className="mt-5 space-y-4"

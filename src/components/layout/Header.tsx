@@ -337,7 +337,7 @@ export function Header() {
                     </div>
 
                     <div className="pt-3 space-y-2.5">
-                      {/* 1-Click Google Sign In */}
+                      {/* Google sign in */}
                       <button
                         id="header-google-signin-btn"
                         type="button"
@@ -530,7 +530,7 @@ export function Header() {
                 Enterprise & Customer Fleet Access
               </div>
 
-              {/* 1-Click Google Sign-In on mobile */}
+              {/* Google sign in (mobile) */}
               {mounted && !user && (
                 <button
                   type="button"

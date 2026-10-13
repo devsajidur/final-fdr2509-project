@@ -143,7 +143,7 @@ export default function AdminPanelPage() {
                 }}
                 className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-[8px] transition-all cursor-pointer shadow-lg active:scale-98"
               >
-                👑 1-Click Access as Corporate Admin (admin@macktrucks.com)
+                👑 Sign in as Corporate Admin (admin@macktrucks.com)
               </button>
               <Link
                 href="/login"

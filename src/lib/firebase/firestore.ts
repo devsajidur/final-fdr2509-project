@@ -367,7 +367,7 @@ export async function checkFirebaseConnection(): Promise<{
   if (!isFirebaseConfigured) {
     return {
       connected: false,
-      message: 'Firebase credentials not found in .env.local (Running in Safe Mock Mode)',
+      message: 'Firebase credentials not found in .env.local (running in offline mode)',
     };
   }
 
@@ -409,7 +409,7 @@ export async function checkFirebaseConnection(): Promise<{
 export function subscribeAllQuotes(
   callback: (quotes: QuoteRequestRecord[]) => void
 ): () => void {
-  // Read local storage for instant demo baseline
+  // Read quotes saved in the browser, or fall back to sample data
   const getLocalQuotes = (): QuoteRequestRecord[] => {
     try {
       if (typeof window !== 'undefined') {

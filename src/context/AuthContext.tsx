@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('mack_active_user', JSON.stringify(profile));
           return { success: true };
         } catch (popupErr: unknown) {
-          console.warn('Firebase Google Auth popup unavailable or cancelled, engaging reliable fallback:', popupErr);
+          console.warn('Google sign-in popup failed or was closed, using demo Google account:', popupErr);
           const fallbackProfile: UserProfile = {
             ...DEMO_GOOGLE_USER,
             createdAt: new Date().toISOString(),
