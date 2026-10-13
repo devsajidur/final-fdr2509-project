@@ -187,10 +187,10 @@ export function Header() {
                     window.history.pushState(null, '', item.href);
                   }, 120);
                 }}
-                className={`text-[16px] leading-[24px] py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] ${
+                className={`text-[16px] leading-[24px] py-2 px-3 text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] active:bg-gray-100 ${
                   item.isActive
-                    ? 'font-medium text-[#111827]'
-                    : 'font-normal text-[#4B5563] hover:text-[#111827]'
+                    ? 'font-semibold text-[#111827] bg-gray-50'
+                    : 'font-normal text-[#4B5563] hover:text-[#111827] hover:bg-gray-50'
                 }`}
               >
                 {item.label}

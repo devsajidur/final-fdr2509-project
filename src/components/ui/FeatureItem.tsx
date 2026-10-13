@@ -38,7 +38,7 @@ export function FeatureItem({ feature }: FeatureItemProps) {
         }
       }}
       aria-label={`Explore feature details: ${feature.title}`}
-      className="flex flex-col items-center text-center w-full lg:w-[384px] lg:h-[164px] cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] p-2 transition-all duration-200 hover:-translate-y-1"
+      className="flex flex-col items-center text-center w-full lg:w-[384px] lg:h-[164px] cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] p-2 transition-all duration-200 hover:-translate-y-1 active:scale-[0.98]"
     >
       {/* 64x64 Circular Icon Background */}
       <div className="w-[64px] h-[64px] rounded-full bg-[#F3F4F6] text-[#374151] flex items-center justify-center shrink-0 group-hover:bg-black group-hover:text-white transition-colors duration-200">

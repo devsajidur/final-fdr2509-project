@@ -21,22 +21,20 @@ export function CallToActionSection() {
         </p>
 
         {/* Buttons: Gap 16px, center aligned */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-[16px] w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-[16px] w-full max-w-[340px] sm:max-w-none mx-auto">
           <Button
             variant="primary-white"
-            exactWidth={171.77}
             exactHeight={50}
             href={callToActionContent.primaryCta.href}
-            className="text-[16px] font-semibold"
+            className="text-[16px] font-semibold w-full max-w-[340px] sm:w-[171.77px]"
           >
             {callToActionContent.primaryCta.label}
           </Button>
           <Button
             variant="cta-outline"
-            exactWidth={188.47}
             exactHeight={50}
             href={callToActionContent.secondaryCta.href}
-            className="text-[16px] font-semibold"
+            className="text-[16px] font-semibold w-full max-w-[340px] sm:w-[188.47px]"
           >
             {callToActionContent.secondaryCta.label}
           </Button>

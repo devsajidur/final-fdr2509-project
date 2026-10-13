@@ -41,7 +41,7 @@ export function SpecificationCard({ spec }: SpecificationCardProps) {
         }
       }}
       aria-label={`View full technical data for ${spec.title}`}
-      className="bg-[#FFFFFF] rounded-[8px] card-shadow p-[24px] flex flex-col justify-start w-full lg:w-[280px] lg:h-[196px] shrink-0 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-black group"
+      className="bg-[#FFFFFF] rounded-[8px] card-shadow p-[24px] flex flex-col justify-start items-center text-center lg:items-start lg:text-left w-full max-w-[340px] sm:max-w-none lg:w-[280px] lg:h-[196px] shrink-0 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-black group mx-auto lg:mx-0"
       style={{
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
       }}

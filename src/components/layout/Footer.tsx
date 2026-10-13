@@ -18,8 +18,8 @@ export function Footer() {
         {/* 4 Columns Grid: 280px each, gap 32px */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[32px] justify-between">
           {/* Column 1: MACK Logo & Tagline */}
-          <div className="w-full lg:w-[280px]">
-            <div className="flex items-center">
+          <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start">
               <div className="w-[32px] h-[32px] bg-[#FFFFFF] rounded-[4px] flex items-center justify-center shrink-0">
                 <FooterTruckLogoIcon />
               </div>
@@ -33,11 +33,11 @@ export function Footer() {
           </div>
 
           {/* Column 2: Products */}
-          <div className="w-full lg:w-[280px]">
+          <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Products
             </h4>
-            <ul className="space-y-[8px]">
+            <ul className="space-y-[8px] flex flex-col items-center sm:items-start">
               {footerContent.columns[0].links.map((link) => (
                 <li key={link.label}>
                   <a
@@ -52,11 +52,11 @@ export function Footer() {
           </div>
 
           {/* Column 3: Support */}
-          <div className="w-full lg:w-[280px]">
+          <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Support
             </h4>
-            <ul className="space-y-[8px]">
+            <ul className="space-y-[8px] flex flex-col items-center sm:items-start">
               {footerContent.columns[1].links.map((link) => (
                 <li key={link.label}>
                   <a
@@ -71,11 +71,11 @@ export function Footer() {
           </div>
 
           {/* Column 4: Connect & Social Icons */}
-          <div className="w-full lg:w-[280px]">
+          <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Connect
             </h4>
-            <div className="flex items-center space-x-[16px] text-[#9CA3AF] pt-[3px]">
+            <div className="flex items-center justify-center sm:justify-start space-x-[16px] text-[#9CA3AF] pt-[3px]">
               {/* Twitter / X (Figma: width 16, height 16) */}
               <a
                 href="#twitter"
@@ -107,8 +107,8 @@ export function Footer() {
         </div>
 
         {/* Divider & Copyright */}
-        <div className="border-t border-white/10 mt-[48px] pt-[24px] pb-[24px] flex items-center justify-center">
-          <p className="text-[16px] leading-[24px] text-[#9CA3AF] text-center">
+        <div className="border-t border-white/10 mt-[48px] pt-[24px] pb-[88px] lg:pb-[24px] flex items-center justify-center">
+          <p className="text-[14px] sm:text-[16px] leading-[24px] text-[#9CA3AF] text-center px-4">
             {footerContent.copyright}
           </p>
         </div>

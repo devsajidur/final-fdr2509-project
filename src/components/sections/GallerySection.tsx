@@ -32,7 +32,7 @@ export function GallerySection() {
                 }
               }}
               aria-label={`Enlarge photo: ${item.title}`}
-              className="relative w-full max-w-[389.34px] h-[219px] rounded-[8px] overflow-hidden shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+              className="relative w-full max-w-[389.34px] h-[219px] rounded-[8px] overflow-hidden shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black active:scale-[0.98] transition-all duration-200 mx-auto"
               style={{
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
               }}
