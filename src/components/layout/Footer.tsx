@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { footerContent } from '@/data/site-content';
 import {
   FooterTruckLogoIcon,
@@ -102,6 +103,19 @@ export function Footer() {
               >
                 <FacebookIcon />
               </a>
+            </div>
+
+            {/* Direct Multi-Page Portal Access */}
+            <div className="mt-[16px] flex flex-col items-center sm:items-start space-y-[6px] text-[13px]">
+              <Link href="/dashboard" className="text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors">
+                Customer Fleet Portal →
+              </Link>
+              <Link href="/admin" className="text-[#9CA3AF] hover:text-amber-400 transition-colors">
+                Corporate Admin Panel →
+              </Link>
+              <Link href="/login" className="text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors">
+                Sign In / Demo Access
+              </Link>
             </div>
           </div>
         </div>

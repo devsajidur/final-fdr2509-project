@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Montserrat } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -28,7 +29,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-full flex flex-col font-sans bg-[#F9FAFB] text-[#111827]"
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

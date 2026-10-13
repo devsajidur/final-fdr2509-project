@@ -66,6 +66,7 @@ export function HeroSection() {
                 width={584}
                 height={384}
                 priority
+                loading="eager"
                 className="w-full h-full object-cover object-center rounded-[8px]"
               />
             </div>

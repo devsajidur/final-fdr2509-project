@@ -222,6 +222,38 @@ export function Header() {
                 Contact Dealer
               </Button>
             </div>
+
+            {/* Multi-Page Portals (Customer & Admin) */}
+            <div className="pt-3 border-t border-gray-200 flex flex-col space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center">
+                Enterprise & Customer Access
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-[6px] bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[13px] border border-blue-200 transition-colors active:scale-98"
+                >
+                  <span>👤</span>
+                  <span>Customer</span>
+                </Link>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-[6px] bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-[13px] border border-amber-200 transition-colors active:scale-98"
+                >
+                  <span>👑</span>
+                  <span>Admin</span>
+                </Link>
+              </div>
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-1.5 text-[13px] font-medium text-gray-600 hover:text-black"
+              >
+                Sign In / Switch Accounts →
+              </Link>
+            </div>
           </nav>
         </div>
       )}

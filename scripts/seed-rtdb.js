@@ -93,31 +93,31 @@ const payload = {
   },
   gallery: {
     'gallery-1': {
-      id: 'gallery-1',
-      title: 'Highway Hauler',
-      alt: 'Mack Anthem semi truck on open highway at sunrise',
-      src: '/images/hero-truck.webp',
-      width: 389,
-      height: 219,
-      aspectClass: 'aspect-[389/219]'
+      id: 'gallery-interior',
+      title: 'Cabin Interior',
+      alt: 'Mack Anthem modern truck cabin interior with dashboard and steering wheel',
+      src: '/images/mack-interior.png',
+      width: 389.33,
+      height: 218.98,
+      aspectClass: 'aspect-[389.33/218.98]'
     },
     'gallery-2': {
-      id: 'gallery-2',
-      title: 'Driver Environment',
-      alt: 'Mack Anthem ergonomic modern driver cab interior and steering cockpit',
-      src: '/images/gallery-cab-interior.webp',
-      width: 389,
-      height: 219,
-      aspectClass: 'aspect-[389/219]'
+      id: 'gallery-engine',
+      title: 'Engine Compartment',
+      alt: 'Mack MP8 13L engine compartment showing high-performance mechanical powertrain',
+      src: '/images/mack-engine.png',
+      width: 389.33,
+      height: 218.98,
+      aspectClass: 'aspect-[389.33/218.98]'
     },
     'gallery-3': {
-      id: 'gallery-3',
-      title: 'Powertrain Engineering',
-      alt: 'Mack MP8 13L heavy-duty diesel engine block and components',
-      src: '/images/gallery-engine.webp',
-      width: 389,
-      height: 219,
-      aspectClass: 'aspect-[389/219]'
+      id: 'gallery-rear',
+      title: 'Rear Exterior',
+      alt: 'Rear view of Mack truck showing dual rear axles, taillights, and trailer linkage on highway',
+      src: '/images/mack-rear.png',
+      width: 389.34,
+      height: 219.0,
+      aspectClass: 'aspect-[389.34/219]'
     }
   }
 };

@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { triggerMackModal } from '@/components/ui/InteractionModals';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 
 export function MobileAppNavBar() {
-  const [activeTab, setActiveTab] = useState<'home' | 'specs' | 'build' | 'gallery' | 'search'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'specs' | 'build' | 'gallery' | 'portal'>('home');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,19 +102,18 @@ export function MobileAppNavBar() {
           <span className="text-[10px] mt-0.5 tracking-tight">Gallery</span>
         </button>
 
-        {/* 5. Search */}
-        <button
-          type="button"
-          onClick={() => triggerMackModal('search')}
-          aria-label="Search Models and Specs"
+        {/* 5. Portal Access */}
+        <Link
+          href="/login"
+          aria-label="Mack Customer and Admin Portal"
           className="flex flex-col items-center justify-center flex-1 h-full py-1 text-center text-gray-500 hover:text-gray-900 transition-all duration-150 active:scale-90"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
           </svg>
-          <span className="text-[10px] mt-0.5 tracking-tight">Search</span>
-        </button>
+          <span className="text-[10px] mt-0.5 tracking-tight">Portal</span>
+        </Link>
       </div>
     </nav>
   );

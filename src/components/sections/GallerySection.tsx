@@ -55,6 +55,7 @@ export function GallerySection() {
                 alt={item.alt}
                 title={item.title}
                 fill
+                loading="eager"
                 sizes="(max-width: 768px) 100vw, 390px"
                 className="object-cover object-center rounded-[8px] transition-transform duration-300 group-hover:scale-105"
               />
