@@ -192,7 +192,7 @@ export default function CustomerDashboardPage() {
       <div className="min-h-screen bg-[#0A0D14] text-white flex flex-col justify-between">
         <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-[32px] h-[32px] bg-white rounded-[4px] flex items-center justify-center text-black">
+            <div className="w-[32px] h-[32px] bg-[#000000] border border-white/20 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
               <HeaderTruckLogoIcon />
             </div>
             <span className="text-[20px] font-bold">MACK</span>
@@ -258,7 +258,7 @@ export default function CustomerDashboardPage() {
         <div className="max-w-[1280px] mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2.5 group">
-              <div className="w-[32px] h-[32px] bg-white rounded-[4px] flex items-center justify-center text-black">
+              <div className="w-[32px] h-[32px] bg-[#000000] border border-blue-500/30 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
                 <HeaderTruckLogoIcon />
               </div>
               <span className="text-[20px] font-bold tracking-wider text-white">MACK</span>

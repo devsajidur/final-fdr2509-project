@@ -96,13 +96,15 @@ export default function AdminPanelPage() {
     );
   }
 
-  // Admin Access Protection Gate
-  if (!user || user.role !== 'admin') {
+  // Strict Corporate Admin Access Gate - Only admin@macktrucks.com is authorized
+  const isAuthorizedAdmin = user && user.role === 'admin' && user.email.toLowerCase().trim() === 'admin@macktrucks.com';
+
+  if (!isAuthorizedAdmin) {
     return (
       <div className="min-h-screen bg-[#0A0D14] text-white flex flex-col justify-between">
         <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-[32px] h-[32px] bg-white rounded-[4px] flex items-center justify-center text-black">
+            <div className="w-[32px] h-[32px] bg-[#000000] border border-white/20 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
               <HeaderTruckLogoIcon />
             </div>
             <span className="text-[20px] font-bold">MACK</span>
@@ -113,13 +115,24 @@ export default function AdminPanelPage() {
         </header>
 
         <main className="flex-1 flex items-center justify-center px-4 py-12">
-          <div className="max-w-[480px] w-full bg-[#111827] border border-red-500/30 rounded-[16px] p-8 text-center shadow-2xl">
-            <div className="w-16 h-16 mx-auto rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-[30px] mb-4">
+          <div className="max-w-[480px] w-full bg-[#111827] border border-amber-500/30 rounded-[16px] p-8 text-center shadow-2xl">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[30px] mb-4">
               🛡️
             </div>
             <h1 className="text-[24px] font-bold text-white mb-2">Corporate Admin Access Required</h1>
+            
+            {user ? (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-[8px] p-3 mb-4 text-left">
+                <div className="text-[11px] font-mono text-red-300 font-bold tracking-wider uppercase">ACCESS RESTRICTED</div>
+                <div className="text-[13px] text-gray-300 mt-1">
+                  You are signed in as <span className="font-semibold text-white">{user.email}</span> (Fleet Customer).
+                  Customer accounts are not authorized to view internal dealership operations.
+                </div>
+              </div>
+            ) : null}
+
             <p className="text-[14px] text-gray-400 mb-6">
-              This dashboard is restricted to authorized Mack Trucks corporate administrators (<code className="text-amber-400">admin@macktrucks.com</code>).
+              This console is exclusively reserved for Mack Trucks corporate administrators (<code className="text-amber-400 font-mono">admin@macktrucks.com</code>).
             </p>
             <div className="space-y-3">
               <button
@@ -130,7 +143,7 @@ export default function AdminPanelPage() {
                 }}
                 className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-[8px] transition-all cursor-pointer shadow-lg active:scale-98"
               >
-                👑 1-Click Access as Corporate Admin
+                👑 1-Click Access as Corporate Admin (admin@macktrucks.com)
               </button>
               <Link
                 href="/login"
@@ -138,12 +151,20 @@ export default function AdminPanelPage() {
               >
                 Sign In with Corporate Credentials
               </Link>
+              {user && (
+                <Link
+                  href="/dashboard"
+                  className="block w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium py-2 rounded-[8px] text-[13px] transition-colors"
+                >
+                  Return to Customer Portal (My Quotes & Financing) →
+                </Link>
+              )}
             </div>
           </div>
         </main>
 
         <footer className="border-t border-white/10 py-4 text-center text-gray-500 text-[12px]">
-          © 2026 Mack Trucks Corporate Security
+          © 2026 Mack Trucks Corporate Security. All administrative activities are logged.
         </footer>
       </div>
     );
@@ -159,7 +180,7 @@ export default function AdminPanelPage() {
         <div className="max-w-[1360px] mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
             <Link href="/" className="flex items-center space-x-2.5">
-              <div className="w-[32px] h-[32px] bg-amber-400 rounded-[4px] flex items-center justify-center text-black font-bold">
+              <div className="w-[32px] h-[32px] bg-[#000000] border border-amber-500/40 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
                 <HeaderTruckLogoIcon />
               </div>
               <span className="text-[20px] font-bold tracking-wider text-white">MACK</span>

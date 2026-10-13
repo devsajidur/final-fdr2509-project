@@ -67,16 +67,30 @@ export const DEMO_GOOGLE_USER: UserProfile = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('mack_active_user');
-        if (stored) return JSON.parse(stored);
-      }
-    } catch {}
-    return null;
-  });
+  // Initial state is strictly null to prevent SSR / client hydration mismatches
+  // Visitors are logged out by default until they explicitly authenticate
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Restore session from client storage safely after mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('mack_active_user');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed === 'object') {
+              const isAdmin = parsed.email?.toLowerCase().trim() === 'admin@macktrucks.com';
+              parsed.role = isAdmin ? 'admin' : 'customer';
+              setUser(parsed);
+            }
+          }
+        }
+      } catch {}
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Initialize from Firebase Auth
   useEffect(() => {
@@ -84,11 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         if (fbUser) {
-          const isAdmin = fbUser.email?.toLowerCase().includes('admin') || fbUser.email === DEMO_ADMIN.email;
+          const isAdmin = fbUser.email?.toLowerCase().trim() === 'admin@macktrucks.com';
           const profile: UserProfile = {
             uid: fbUser.uid,
             email: fbUser.email || '',
-            displayName: fbUser.displayName || (isAdmin ? 'Mack Admin' : 'Fleet Customer'),
+            displayName: fbUser.displayName || (isAdmin ? 'Mack Corporate Operations' : 'Fleet Customer'),
             role: isAdmin ? 'admin' : 'customer',
             createdAt: new Date().toISOString(),
           };
@@ -121,11 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (auth) {
       try {
         const cred = await signInWithEmailAndPassword(auth, email, pass);
-        const isAdmin = cred.user.email?.toLowerCase().includes('admin');
+        const isAdmin = cred.user.email?.toLowerCase().trim() === 'admin@macktrucks.com';
         const profile: UserProfile = {
           uid: cred.user.uid,
           email: cred.user.email || email,
-          displayName: cred.user.displayName || (isAdmin ? 'Corporate Admin' : 'Fleet Client'),
+          displayName: cred.user.displayName || (isAdmin ? 'Mack Corporate Operations' : 'Fleet Client'),
           role: isAdmin ? 'admin' : 'customer',
           createdAt: new Date().toISOString(),
         };
@@ -136,11 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const msg = fbErr instanceof Error ? fbErr.message : String(fbErr);
         // If credentials invalid on Firebase, allow fallback if demo password is used
         if (pass.length >= 6) {
-          const isAdmin = normalized.includes('admin');
+          const isAdmin = normalized === 'admin@macktrucks.com';
           const fallbackProfile: UserProfile = {
             uid: `usr_${Date.now()}`,
             email,
-            displayName: isAdmin ? 'Operations Admin' : email.split('@')[0],
+            displayName: isAdmin ? 'Mack Corporate Operations' : email.split('@')[0],
             role: isAdmin ? 'admin' : 'customer',
             createdAt: new Date().toISOString(),
           };
@@ -153,11 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // 3. Offline/Client Auth Mode
-    const isAdmin = normalized.includes('admin');
+    const isAdmin = normalized === 'admin@macktrucks.com';
     const profile: UserProfile = {
       uid: `usr_${Date.now()}`,
       email,
-      displayName: isAdmin ? 'Corporate Admin' : email.split('@')[0],
+      displayName: isAdmin ? 'Mack Corporate Operations' : email.split('@')[0],
       role: isAdmin ? 'admin' : 'customer',
       createdAt: new Date().toISOString(),
     };
@@ -175,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           provider.setCustomParameters({ prompt: 'select_account' });
           const cred = await signInWithPopup(auth, provider);
           const email = cred.user.email || 'partner.fleet@gmail.com';
-          const isAdmin = email.toLowerCase().includes('admin');
+          const isAdmin = email.toLowerCase().trim() === 'admin@macktrucks.com';
           const profile: UserProfile = {
             uid: cred.user.uid,
             email,
@@ -250,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {}
       }
 
-      const isAdmin = data.email.toLowerCase().includes('admin');
+      const isAdmin = data.email.toLowerCase().trim() === 'admin@macktrucks.com';
       const profile: UserProfile = {
         uid,
         email: data.email,

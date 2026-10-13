@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { navigationItems } from '@/data/site-content';
 import { Button } from '@/components/ui/Button';
 import { HeaderTruckLogoIcon, GoogleIcon } from '@/components/ui/Icons';
@@ -10,9 +10,14 @@ import { triggerMackModal } from '@/components/ui/InteractionModals';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import { useAuth } from '@/context/AuthContext';
 
+const emptySubscribe = () => () => {};
+const useIsMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
+
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loginWithGoogle, logout } = useAuth();
+  const mounted = useIsMounted();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
   const portalDropdownRef = useRef<HTMLDivElement>(null);
@@ -107,24 +112,30 @@ export function Header() {
             className="hidden md:flex items-center space-x-[32px]"
             aria-label="Main Navigation"
           >
-            {navigationItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  smoothScrollTo(item.href, 65);
-                  window.history.pushState(null, '', item.href);
-                }}
-                className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
-                  item.isActive
-                    ? 'font-medium text-[#111827]'
-                    : 'font-normal text-[#4B5563] hover:text-[#111827]'
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
+            {navigationItems.map((item) => {
+              const pageRoute = `/${item.label.toLowerCase()}`;
+              const isCurrentPage = pathname === pageRoute;
+              return (
+                <a
+                  key={item.label}
+                  href={pathname === '/' ? item.href : pageRoute}
+                  onClick={(e) => {
+                    if (pathname === '/') {
+                      e.preventDefault();
+                      smoothScrollTo(item.href, 65);
+                      window.history.pushState(null, '', item.href);
+                    }
+                  }}
+                  className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
+                    (pathname === '/' && item.isActive) || isCurrentPage
+                      ? 'font-medium text-[#111827]'
+                      : 'font-normal text-[#4B5563] hover:text-[#111827]'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
         </div>
 
@@ -153,7 +164,7 @@ export function Header() {
 
           {/* Fleet Portal Account Popover Trigger */}
           <div className="relative" ref={portalDropdownRef}>
-            {user ? (
+            {mounted && user ? (
               <button
                 id="header-fleet-portal-btn"
                 type="button"
@@ -222,7 +233,7 @@ export function Header() {
                 id="header-portal-popover"
                 className="absolute right-0 top-[48px] w-[310px] bg-[#111827] text-white border border-white/15 rounded-[12px] shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
               >
-                {user ? (
+                {mounted && user ? (
                   <>
                     <div className="pb-3 border-b border-white/10">
                       <div className="flex items-center gap-2.5">
@@ -420,27 +431,35 @@ export function Header() {
           className="md:hidden bg-[#FFFFFF] border-b border-[#F3F4F6] px-6 py-4 shadow-lg transition-all duration-200 ease-in-out"
         >
           <nav className="flex flex-col space-y-4" aria-label="Mobile Navigation">
-            {navigationItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setMobileMenuOpen(false);
-                  setTimeout(() => {
-                    smoothScrollTo(item.href, 65);
-                    window.history.pushState(null, '', item.href);
-                  }, 80);
-                }}
-                className={`text-[16px] leading-[24px] py-2 px-3 text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] active:bg-gray-100 ${
-                  item.isActive
-                    ? 'font-semibold text-[#111827] bg-gray-50'
-                    : 'font-normal text-[#4B5563] hover:text-[#111827] hover:bg-gray-50'
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
+            {navigationItems.map((item) => {
+              const pageRoute = `/${item.label.toLowerCase()}`;
+              const isCurrentPage = pathname === pageRoute;
+              return (
+                <a
+                  key={item.label}
+                  href={pathname === '/' ? item.href : pageRoute}
+                  onClick={(e) => {
+                    if (pathname === '/') {
+                      e.preventDefault();
+                      setMobileMenuOpen(false);
+                      setTimeout(() => {
+                        smoothScrollTo(item.href, 65);
+                        window.history.pushState(null, '', item.href);
+                      }, 80);
+                    } else {
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  className={`text-[16px] leading-[24px] py-2 px-3 text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] active:bg-gray-100 ${
+                    (pathname === '/' && item.isActive) || isCurrentPage
+                      ? 'font-semibold text-[#111827] bg-gray-50'
+                      : 'font-normal text-[#4B5563] hover:text-[#111827] hover:bg-gray-50'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
             <div className="pt-2 flex flex-col space-y-2">
               <button
                 type="button"
@@ -468,6 +487,43 @@ export function Header() {
               </Button>
             </div>
 
+            {/* Direct Commercial Hub Links */}
+            <div className="pt-2 border-t border-gray-100">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center mb-1.5">
+                Commercial Hub Pages
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 text-[12px]">
+                <Link
+                  href="/trucks"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
+                >
+                  🚚 Truck Models
+                </Link>
+                <Link
+                  href="/parts"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
+                >
+                  ⚙️ Genuine Parts
+                </Link>
+                <Link
+                  href="/service"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
+                >
+                  🔧 Uptime Service
+                </Link>
+                <Link
+                  href="/support"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
+                >
+                  📞 Fleet Support
+                </Link>
+              </div>
+            </div>
+
             {/* Multi-Page Portals (Customer & Admin) */}
             <div className="pt-3 border-t border-gray-200 flex flex-col space-y-2">
               <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center">
@@ -475,7 +531,7 @@ export function Header() {
               </div>
 
               {/* 1-Click Google Sign-In on mobile */}
-              {!user && (
+              {mounted && !user && (
                 <button
                   type="button"
                   onClick={async () => {
@@ -499,7 +555,7 @@ export function Header() {
                   className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-[6px] bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[13px] border border-blue-200 transition-colors active:scale-98"
                 >
                   <span>👤</span>
-                  <span>{user ? 'My Portal' : 'Customer'}</span>
+                  <span>{mounted && user ? 'My Portal' : 'Customer'}</span>
                 </Link>
                 <Link
                   href="/admin"
@@ -511,7 +567,7 @@ export function Header() {
                 </Link>
               </div>
 
-              {user ? (
+              {mounted && user ? (
                 <button
                   type="button"
                   onClick={async () => {
