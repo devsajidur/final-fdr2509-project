@@ -34,6 +34,7 @@ export default function CustomerDashboardPage() {
   const [newQuoteTimeframe, setNewQuoteTimeframe] = useState('Within 30 Days');
   const [newQuoteMsg, setNewQuoteMsg] = useState('');
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
+  const [quoteToast, setQuoteToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // TCO Calculator State
   const [tcoFleetSize, setTcoFleetSize] = useState(10);
@@ -77,7 +78,7 @@ export default function CustomerDashboardPage() {
     });
     const unsubDrives = subscribeTestDrives((liveDrives) => {
       const userDrives = liveDrives.filter(
-        (d) => d.email.toLowerCase() === user.email.toLowerCase() || user.email.includes('customer@')
+        (d) => d.email.toLowerCase() === user.email.toLowerCase()
       );
       setTestDrives(userDrives);
     });
@@ -113,24 +114,35 @@ export default function CustomerDashboardPage() {
 
   const handleCreateQuote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || quoteSubmitting) return;
     setQuoteSubmitting(true);
     try {
-      await submitQuoteToFirestore({
+      const res = await submitQuoteToFirestore({
         name: user.displayName,
         email: user.email,
         phone: user.phone,
         company: user.company,
+        fleetSize: user.fleetSize,
         selectedEngine: newQuoteEngine,
         estimatedPrice: '$235,000',
+        timeFrame: newQuoteTimeframe,
+        message: newQuoteMsg.trim() || undefined,
         zipCode: '60601',
       });
       setShowQuoteForm(false);
       setNewQuoteMsg('');
+      setQuoteToast({
+        type: 'success',
+        text: res.isRealtime
+          ? 'Quote request submitted and synced to Firebase.'
+          : 'Quote request saved. It will sync to Firebase when the connection allows.',
+      });
     } catch (err) {
       console.error(err);
+      setQuoteToast({ type: 'error', text: 'Could not submit your quote. Please try again.' });
     } finally {
       setQuoteSubmitting(false);
+      setTimeout(() => setQuoteToast(null), 5000);
     }
   };
 
@@ -950,6 +962,19 @@ export default function CustomerDashboardPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {quoteToast && (
+          <div
+            role="status"
+            className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] px-4 py-3 rounded-[10px] text-[13px] font-medium shadow-2xl border ${
+              quoteToast.type === 'success'
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                : 'bg-red-500/15 border-red-500/40 text-red-300'
+            }`}
+          >
+            {quoteToast.text}
           </div>
         )}
 

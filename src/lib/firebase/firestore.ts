@@ -25,7 +25,82 @@ export interface QuoteSubmission {
   selectedEngine: string;
   estimatedPrice: string;
   zipCode?: string;
+  fleetSize?: string;
+  model?: string;
+  timeFrame?: string;
+  message?: string;
+  estimatedValue?: number;
+  status?: QuoteRequestRecord['status'];
   submittedAt?: unknown;
+}
+
+/** Max time (ms) the UI waits for a cloud write acknowledgement before continuing. */
+const WRITE_TIMEOUT_MS = 4000;
+
+const LOCAL_CHANGE_EVENT = 'mack-local-data-changed';
+
+/** Tells live subscribers that local storage changed so lists refresh instantly. */
+function notifyLocalChange(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
+  }
+}
+
+/** Subscribes to local storage changes; returns an unsubscribe function. */
+function onLocalChange(handler: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(LOCAL_CHANGE_EVENT, handler);
+  window.addEventListener('storage', handler);
+  return () => {
+    window.removeEventListener(LOCAL_CHANGE_EVENT, handler);
+    window.removeEventListener('storage', handler);
+  };
+}
+
+/** Firebase RTDB/Firestore reject `undefined` values, so strip them before writing. */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
+/**
+ * Resolves true if the task settles successfully within the timeout, false otherwise.
+ * Firebase `set`/`setDoc` only resolve after a server ack, so on a slow network, missing
+ * database or rejected rules they could hang forever. The SDK keeps retrying queued
+ * writes in the background; the UI just must not wait on them.
+ */
+async function settleWithin(task: () => Promise<unknown>, label: string): Promise<boolean> {
+  try {
+    const outcome = await Promise.race([
+      task().then(() => 'ok' as const),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), WRITE_TIMEOUT_MS)),
+    ]);
+    if (outcome === 'timeout') {
+      console.warn(`[Firebase] ${label} not acknowledged within ${WRITE_TIMEOUT_MS}ms; saved locally and will sync when possible.`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn(`[Firebase] ${label} failed:`, e instanceof Error ? e.message : e);
+    return false;
+  }
+}
+
+/** Writes a record to RTDB and Firestore in parallel; true if at least one cloud write was acknowledged. */
+async function persistRecord(
+  collectionName: string,
+  id: string,
+  rtdbData: Record<string, unknown>,
+  firestoreData: Record<string, unknown>
+): Promise<boolean> {
+  const jobs: Promise<boolean>[] = [];
+  if (rtdb) {
+    jobs.push(settleWithin(() => dbSet(dbRef(rtdb!, `${collectionName}/${id}`), stripUndefined(rtdbData)), `RTDB ${collectionName} write`));
+  }
+  if (db) {
+    jobs.push(settleWithin(() => setDoc(doc(db!, collectionName, id), stripUndefined(firestoreData)), `Firestore ${collectionName} write`));
+  }
+  const results = await Promise.all(jobs);
+  return results.some(Boolean);
 }
 
 export interface ContactSubmission {
@@ -226,45 +301,31 @@ export async function submitQuoteToFirestore(
   const quoteId = `quote_${Date.now()}`;
   const timestamp = new Date().toISOString();
 
-  // Save to local storage for instant resilience
+  // Normalise into the shape the admin/customer views read (QuoteRequestRecord)
+  const priceNumber = Number(String(quote.estimatedPrice).replace(/[^0-9.]/g, '').split('.')[0]);
+  const record = stripUndefined({
+    ...quote,
+    id: quoteId,
+    model: quote.model || quote.selectedEngine,
+    status: quote.status || 'pending',
+    estimatedValue: quote.estimatedValue ?? (Number.isFinite(priceNumber) && priceNumber > 0 ? priceNumber : undefined),
+    submittedAt: timestamp,
+  });
+
+  // Save to local storage first for instant resilience
   try {
     if (typeof window !== 'undefined') {
       const existing = JSON.parse(localStorage.getItem('mack_local_quotes') || '[]');
-      existing.push({ ...quote, id: quoteId, submittedAt: timestamp });
+      existing.push(record);
       localStorage.setItem('mack_local_quotes', JSON.stringify(existing));
+      notifyLocalChange();
     }
   } catch {}
 
-  let recordedRealtime = false;
-
-  // Write to Realtime Database if available
-  if (rtdb) {
-    try {
-      await dbSet(dbRef(rtdb, `quotes/${quoteId}`), {
-        ...quote,
-        id: quoteId,
-        submittedAt: timestamp,
-      });
-      recordedRealtime = true;
-    } catch (e) {
-      console.warn('[Firebase RTDB] Quote write warning:', e);
-    }
-  }
-
-  // Write to Firestore if available
-  if (db) {
-    try {
-      const docRef = doc(db, 'quotes', quoteId);
-      await setDoc(docRef, {
-        ...quote,
-        id: quoteId,
-        submittedAt: serverTimestamp(),
-      });
-      recordedRealtime = true;
-    } catch (e) {
-      console.warn('[Firebase Firestore] Quote write warning:', e);
-    }
-  }
+  const recordedRealtime = await persistRecord('quotes', quoteId, record, {
+    ...record,
+    submittedAt: serverTimestamp(),
+  });
 
   return { success: true, id: quoteId, isRealtime: recordedRealtime };
 }
@@ -277,43 +338,20 @@ export async function submitContactToFirestore(
 ): Promise<{ success: boolean; id: string; isRealtime: boolean }> {
   const contactId = `lead_${Date.now()}`;
   const timestamp = new Date().toISOString();
+  const record = stripUndefined({ ...contact, id: contactId, submittedAt: timestamp });
 
   try {
     if (typeof window !== 'undefined') {
       const existing = JSON.parse(localStorage.getItem('mack_local_leads') || '[]');
-      existing.push({ ...contact, id: contactId, submittedAt: timestamp });
+      existing.push(record);
       localStorage.setItem('mack_local_leads', JSON.stringify(existing));
     }
   } catch {}
 
-  let recordedRealtime = false;
-
-  if (rtdb) {
-    try {
-      await dbSet(dbRef(rtdb, `leads/${contactId}`), {
-        ...contact,
-        id: contactId,
-        submittedAt: timestamp,
-      });
-      recordedRealtime = true;
-    } catch (e) {
-      console.warn('[Firebase RTDB] Lead write warning:', e);
-    }
-  }
-
-  if (db) {
-    try {
-      const docRef = doc(db, 'leads', contactId);
-      await setDoc(docRef, {
-        ...contact,
-        id: contactId,
-        submittedAt: serverTimestamp(),
-      });
-      recordedRealtime = true;
-    } catch (e) {
-      console.warn('[Firebase Firestore] Lead write warning:', e);
-    }
-  }
+  const recordedRealtime = await persistRecord('leads', contactId, record, {
+    ...record,
+    submittedAt: serverTimestamp(),
+  });
 
   return { success: true, id: contactId, isRealtime: recordedRealtime };
 }
@@ -411,17 +449,29 @@ export function subscribeAllQuotes(
     ];
   };
 
-  callback(getLocalQuotes());
+  let remote: QuoteRequestRecord[] = [];
+  const emit = () => {
+    const merged = [...remote];
+    for (const l of getLocalQuotes()) {
+      if (!merged.some((m) => m.id === l.id)) merged.push(l);
+    }
+    merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    callback(merged);
+  };
 
+  emit();
+  const offLocal = onLocalChange(emit);
+
+  let offRemote: () => void = () => {};
   if (rtdb) {
     try {
       const qRef = dbRef(rtdb, 'quotes');
-      const unsub = onValue(
+      offRemote = onValue(
         qRef,
         (snapshot) => {
           const val = snapshot.val();
           if (val) {
-            const list: QuoteRequestRecord[] = Array.isArray(val)
+            remote = Array.isArray(val)
               ? val.filter(Boolean)
               : Object.entries(val).map(([id, item]) => {
                   const q = item as Record<string, unknown>;
@@ -440,25 +490,18 @@ export function subscribeAllQuotes(
                     estimatedValue: typeof q.estimatedValue === 'number' ? q.estimatedValue : 210000,
                   };
                 });
-            // Combine with local mock if list is short
-            const merged = [...list];
-            const local = getLocalQuotes();
-            for (const l of local) {
-              if (!merged.some((m) => m.id === l.id)) {
-                merged.push(l);
-              }
-            }
-            merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-            callback(merged);
+            emit();
           }
         },
         (err) => console.warn('[RTDB Quotes error]:', err.message)
       );
-      return unsub;
     } catch {}
   }
 
-  return () => {};
+  return () => {
+    offLocal();
+    offRemote();
+  };
 }
 
 /**
@@ -470,9 +513,7 @@ export function subscribeUserQuotes(
 ): () => void {
   return subscribeAllQuotes((allQuotes) => {
     const normalized = userEmail.toLowerCase().trim();
-    const userQuotes = allQuotes.filter(
-      (q) => q.email?.toLowerCase().trim() === normalized || q.email?.includes('customer@')
-    );
+    const userQuotes = allQuotes.filter((q) => q.email?.toLowerCase().trim() === normalized);
     callback(userQuotes);
   });
 }
@@ -494,31 +535,23 @@ export async function updateQuoteStatusInFirebase(
         if (idx !== -1) {
           list[idx].status = newStatus;
           localStorage.setItem('mack_local_quotes', JSON.stringify(list));
+          notifyLocalChange();
         }
       }
     }
   } catch {}
 
-  let success = false;
+  const jobs: Promise<boolean>[] = [];
   if (rtdb) {
-    try {
-      await dbUpdate(dbRef(rtdb, `quotes/${quoteId}`), { status: newStatus });
-      success = true;
-    } catch (e) {
-      console.warn('[RTDB quote status error]:', e);
-    }
+    jobs.push(settleWithin(() => dbUpdate(dbRef(rtdb!, `quotes/${quoteId}`), { status: newStatus }), 'RTDB quote status update'));
   }
-
   if (db) {
-    try {
-      await updateDoc(doc(db, 'quotes', quoteId), { status: newStatus });
-      success = true;
-    } catch (e) {
-      console.warn('[Firestore quote status error]:', e);
-    }
+    jobs.push(settleWithin(() => updateDoc(doc(db!, 'quotes', quoteId), { status: newStatus }), 'Firestore quote status update'));
   }
+  await Promise.all(jobs);
 
-  return success || true;
+  // Local copy is already updated, so the UI treats the change as applied.
+  return true;
 }
 
 /**
@@ -531,20 +564,19 @@ export async function deleteQuoteFromFirebase(quoteId: string): Promise<boolean>
       if (stored) {
         const list: QuoteRequestRecord[] = JSON.parse(stored);
         localStorage.setItem('mack_local_quotes', JSON.stringify(list.filter((q) => q.id !== quoteId)));
+        notifyLocalChange();
       }
     }
   } catch {}
 
+  const jobs: Promise<boolean>[] = [];
   if (rtdb) {
-    try {
-      await dbRemove(dbRef(rtdb, `quotes/${quoteId}`));
-    } catch {}
+    jobs.push(settleWithin(() => dbRemove(dbRef(rtdb!, `quotes/${quoteId}`)), 'RTDB quote delete'));
   }
   if (db) {
-    try {
-      await deleteDoc(doc(db, 'quotes', quoteId));
-    } catch {}
+    jobs.push(settleWithin(() => deleteDoc(doc(db!, 'quotes', quoteId)), 'Firestore quote delete'));
   }
+  await Promise.all(jobs);
   return true;
 }
 
@@ -567,14 +599,11 @@ export async function bookTestDrive(
       const existing = JSON.parse(localStorage.getItem('mack_local_testdrives') || '[]');
       existing.unshift(record);
       localStorage.setItem('mack_local_testdrives', JSON.stringify(existing));
+      notifyLocalChange();
     }
   } catch {}
 
-  if (rtdb) {
-    try {
-      await dbSet(dbRef(rtdb, `testdrives/${id}`), record);
-    } catch {}
-  }
+  await persistRecord('testdrives', id, { ...record }, { ...record });
 
   return { success: true, id };
 }
@@ -607,23 +636,41 @@ export function subscribeTestDrives(
     ];
   };
 
-  callback(getLocal());
+  let remote: TestDriveBooking[] = [];
+  const emit = () => {
+    const merged = [...remote];
+    for (const l of getLocal()) {
+      if (!merged.some((m) => m.id === l.id)) merged.push(l);
+    }
+    merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    callback(merged);
+  };
 
+  emit();
+  const offLocal = onLocalChange(emit);
+
+  let offRemote: () => void = () => {};
   if (rtdb) {
     try {
       const ref = dbRef(rtdb, 'testdrives');
-      return onValue(ref, (snap) => {
-        const val = snap.val();
-        if (val) {
-          const list: TestDriveBooking[] = Object.values(val);
-          list.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-          callback(list);
-        }
-      });
+      offRemote = onValue(
+        ref,
+        (snap) => {
+          const val = snap.val();
+          if (val) {
+            remote = Object.values(val) as TestDriveBooking[];
+            emit();
+          }
+        },
+        (err) => console.warn('[RTDB Test drives error]:', err.message)
+      );
     } catch {}
   }
 
-  return () => {};
+  return () => {
+    offLocal();
+    offRemote();
+  };
 }
 
 /**

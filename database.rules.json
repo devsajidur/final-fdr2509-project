@@ -14,11 +14,30 @@
     },
     "quotes": {
       ".read": "auth != null",
-      ".write": true
+      "$quoteId": {
+        ".write": "auth != null || !data.exists()",
+        ".validate": "newData.hasChildren(['name', 'email', 'selectedEngine'])"
+      }
     },
     "leads": {
       ".read": "auth != null",
-      ".write": true
+      "$leadId": {
+        ".write": "auth != null || !data.exists()",
+        ".validate": "newData.hasChildren(['name', 'email', 'message'])"
+      }
+    },
+    "testdrives": {
+      ".read": "auth != null",
+      "$driveId": {
+        ".write": "auth != null || !data.exists()",
+        ".validate": "newData.hasChildren(['customerName', 'email', 'model', 'preferredDate'])"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
     },
     "connection_test": {
       ".read": true,
