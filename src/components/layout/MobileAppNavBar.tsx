@@ -28,7 +28,7 @@ export function MobileAppNavBar() {
 
   const scrollToSection = (id: string, tab: 'home' | 'specs' | 'gallery') => {
     setActiveTab(tab);
-    smoothScrollTo(`#${id}`, 65, 750);
+    smoothScrollTo(`#${id}`, 65);
   };
 
   return (

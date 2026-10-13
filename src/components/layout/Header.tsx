@@ -42,7 +42,7 @@ export function Header() {
       const targetEl = document.querySelector(href);
       if (targetEl) {
         e.preventDefault();
-        smoothScrollTo(href, 65, 750);
+        smoothScrollTo(href, 65);
         window.history.pushState(null, '', href);
       }
     };
@@ -93,7 +93,7 @@ export function Header() {
                 href={item.href}
                 onClick={(e) => {
                   e.preventDefault();
-                  smoothScrollTo(item.href, 65, 750);
+                  smoothScrollTo(item.href, 65);
                   window.history.pushState(null, '', item.href);
                 }}
                 className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
@@ -183,9 +183,9 @@ export function Header() {
                   e.preventDefault();
                   setMobileMenuOpen(false);
                   setTimeout(() => {
-                    smoothScrollTo(item.href, 65, 750);
+                    smoothScrollTo(item.href, 65);
                     window.history.pushState(null, '', item.href);
-                  }, 120);
+                  }, 80);
                 }}
                 className={`text-[16px] leading-[24px] py-2 px-3 text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] active:bg-gray-100 ${
                   item.isActive
