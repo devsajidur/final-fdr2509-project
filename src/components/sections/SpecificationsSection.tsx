@@ -1,8 +1,23 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { specificationsContent } from '@/data/site-content';
 import { SpecificationCard } from '@/components/ui/SpecificationCard';
+import { subscribeSpecifications } from '@/lib/firebase/firestore';
+import { SpecificationItem } from '@/types';
 
 export function SpecificationsSection() {
+  const [specs, setSpecs] = useState<SpecificationItem[]>(specificationsContent.items);
+
+  useEffect(() => {
+    const unsubscribe = subscribeSpecifications((liveSpecs) => {
+      if (liveSpecs && liveSpecs.length > 0) {
+        setSpecs(liveSpecs);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <section
       id="specifications-section"
@@ -23,7 +38,7 @@ export function SpecificationsSection() {
 
         {/* 4 Cards Grid: 280px each, gap 32px, total 1216px */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[24px] lg:gap-[32px] w-full max-w-[1216px] justify-items-center">
-          {specificationsContent.items.map((spec) => (
+          {specs.map((spec) => (
             <SpecificationCard key={spec.id} spec={spec} />
           ))}
         </div>

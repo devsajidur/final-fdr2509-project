@@ -1,11 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { galleryContent } from '@/data/site-content';
 import { triggerMackModal } from '@/components/ui/InteractionModals';
+import { subscribeGallery } from '@/lib/firebase/firestore';
+import { GalleryItemData } from '@/types';
 
 export function GallerySection() {
+  const [items, setItems] = useState<GalleryItemData[]>(galleryContent.items);
+
+  useEffect(() => {
+    const unsubscribe = subscribeGallery((liveItems) => {
+      if (liveItems && liveItems.length > 0) {
+        setItems(liveItems);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <section
       id="gallery-section"
@@ -19,7 +32,7 @@ export function GallerySection() {
 
         {/* 3 Images Grid: Gap 24px, total 1216px, height ~219px */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px] w-full max-w-[1216px] justify-items-center">
-          {galleryContent.items.map((item, index) => (
+          {items.map((item, index) => (
             <div
               key={item.id}
               role="button"

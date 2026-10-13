@@ -1,8 +1,23 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { featuresContent } from '@/data/site-content';
 import { FeatureItem } from '@/components/ui/FeatureItem';
+import { subscribeFeatures } from '@/lib/firebase/firestore';
+import { FeatureItemData } from '@/types';
 
 export function FeaturesSection() {
+  const [features, setFeatures] = useState<FeatureItemData[]>(featuresContent.items);
+
+  useEffect(() => {
+    const unsubscribe = subscribeFeatures((liveFeatures) => {
+      if (liveFeatures && liveFeatures.length > 0) {
+        setFeatures(liveFeatures);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <section
       id="features-section"
@@ -23,7 +38,7 @@ export function FeaturesSection() {
 
         {/* 3 Columns Grid: 384px each, gap 32px, total 1216px */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[32px] w-full max-w-[1216px] justify-items-center">
-          {featuresContent.items.map((feature) => (
+          {features.map((feature) => (
             <FeatureItem key={feature.id} feature={feature} />
           ))}
         </div>

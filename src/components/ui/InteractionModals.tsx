@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { submitQuoteToFirestore, submitContactToFirestore } from '@/lib/firebase/firestore';
 
 export type ModalType =
   | 'configure'
@@ -784,7 +785,7 @@ SUPPORT & SERVICE:
                   </div>
                 ) : (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!quoteCompany.trim() || !quoteEmail.trim()) {
                         setQuoteError('Please enter company name and contact email.');
@@ -792,7 +793,18 @@ SUPPORT & SERVICE:
                       }
                       setQuoteError('');
                       setQuoteSubmitted(true);
-                      showToast('Quote request submitted successfully.');
+                      const res = await submitQuoteToFirestore({
+                        name: quoteCompany,
+                        email: quoteEmail,
+                        company: quoteCompany,
+                        selectedEngine: selectedHp,
+                        estimatedPrice: `$${estimatedPrice.toLocaleString()}`,
+                      });
+                      if (res.isRealtime) {
+                        showToast('✓ Quote saved to Firebase Firestore in real-time!');
+                      } else {
+                        showToast('✓ Quote saved locally (Safe Demo Mode).');
+                      }
                     }}
                     className="mt-5 space-y-4"
                   >
@@ -897,7 +909,7 @@ SUPPORT & SERVICE:
                   </div>
                 ) : (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!contactName.trim() || !contactEmail.trim()) {
                         setContactError('Please provide your name and email address.');
@@ -905,7 +917,18 @@ SUPPORT & SERVICE:
                       }
                       setContactError('');
                       setContactSubmitted(true);
-                      showToast('Inquiry sent to local dealer.');
+                      const res = await submitContactToFirestore({
+                        name: contactName,
+                        email: contactEmail,
+                        phone: contactPhone,
+                        subject: contactType,
+                        message: `Dealer consultation regarding ${contactType}`,
+                      });
+                      if (res.isRealtime) {
+                        showToast('✓ Lead sent to Firebase Firestore in real-time!');
+                      } else {
+                        showToast('✓ Lead registered locally (Safe Demo Mode).');
+                      }
                     }}
                     className="mt-5 space-y-4"
                   >
