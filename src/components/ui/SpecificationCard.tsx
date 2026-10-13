@@ -111,13 +111,13 @@ export function SpecificationCard({ spec }: SpecificationCardProps) {
         {spec.title}
       </h3>
 
-      {/* Primary Detail (16px, color #111827) */}
-      <p className="text-[16px] font-medium leading-[24px] text-[#111827] mt-[4px]">
+      {/* Primary Detail (16px, 400, leading 20px, color #4B5563, top: 124px, gap: 8px) */}
+      <p className="text-[16px] font-normal leading-[20px] text-[#4B5563] mt-[8px]">
         {spec.primaryDetail}
       </p>
 
-      {/* Secondary Detail (14px, color #6B7280) */}
-      <p className="text-[14px] font-normal leading-[20px] text-[#6B7280] mt-[2px]">
+      {/* Secondary Detail (14px, 400, leading 17px, color #6B7280, top: 152px, gap: 4px) */}
+      <p className="text-[14px] font-normal leading-[17px] text-[#6B7280] mt-[4px]">
         {spec.secondaryDetail}
       </p>
     </div>

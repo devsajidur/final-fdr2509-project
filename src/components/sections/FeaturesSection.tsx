@@ -15,8 +15,8 @@ export function FeaturesSection() {
           {featuresContent.title}
         </h2>
 
-        {/* Subtitle: 18px, 400, 28px line-height, center, #4B5563 */}
-        <p className="text-[16px] sm:text-[18px] font-normal leading-[28px] text-[#4B5563] text-center mt-[8px] mb-[48px]">
+        {/* Subtitle: 18px, 400, 28px line-height, center, #4B5563 (Figma top: 52px, gap 16px) */}
+        <p className="text-[16px] sm:text-[18px] font-normal leading-[28px] text-[#4B5563] text-center mt-[16px] mb-[48px]">
           {featuresContent.subtitle}
         </p>
 

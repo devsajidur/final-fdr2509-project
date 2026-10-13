@@ -36,7 +36,7 @@ export function Button({
       break;
     case 'secondary-outline':
       variantStyles =
-        'bg-transparent border border-[#D1D5DB] text-[#111827] hover:bg-black/5 active:bg-black/10 focus-visible:ring-gray-400';
+        'bg-transparent border border-[#D1D5DB] text-[#374151] hover:bg-black/5 active:bg-black/10 focus-visible:ring-gray-400';
       break;
     case 'primary-white':
       variantStyles =

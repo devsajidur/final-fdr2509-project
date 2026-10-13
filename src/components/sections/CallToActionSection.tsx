@@ -14,8 +14,8 @@ export function CallToActionSection() {
           {callToActionContent.title}
         </h2>
 
-        {/* Description: 18px, 400, 28px line-height, #D1D5DB */}
-        <p className="text-[16px] sm:text-[18px] font-normal leading-[28px] text-[#D1D5DB] mt-[12px] mb-[32px] max-w-[700px]">
+        {/* Description: 18px, 400, 28px line-height, #D1D5DB (Figma top: 52px, gap 16px) */}
+        <p className="text-[16px] sm:text-[18px] font-normal leading-[28px] text-[#D1D5DB] mt-[16px] mb-[32px] max-w-[700px]">
           {callToActionContent.description}
         </p>
 
