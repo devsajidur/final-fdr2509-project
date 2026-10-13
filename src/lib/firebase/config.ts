@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getDatabase, Database } from 'firebase/database';
 import { getAuth, Auth } from 'firebase/auth';
 
 /**
@@ -15,6 +16,7 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 export const isFirebaseConfigured = Boolean(
@@ -26,6 +28,7 @@ export const isFirebaseConfigured = Boolean(
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let rtdb: Database | null = null;
 let auth: Auth | null = null;
 
 if (typeof window !== 'undefined' || isFirebaseConfigured) {
@@ -34,10 +37,13 @@ if (typeof window !== 'undefined' || isFirebaseConfigured) {
       app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
       db = getFirestore(app);
       auth = getAuth(app);
+      if (firebaseConfig.databaseURL) {
+        rtdb = getDatabase(app);
+      }
     }
   } catch (error) {
     console.warn('[Firebase] Initialization error, falling back to offline mode:', error);
   }
 }
 
-export { app, db, auth, firebaseConfig };
+export { app, db, rtdb, auth, firebaseConfig };

@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test",
-    "compare": "node scripts/real-visual-comparison.js",
-    "firebase:seed": "node scripts/seed-firestore.js"
+    "firebase:seed": "node scripts/seed-rtdb.js",
+    "firebase:seed:firestore": "node scripts/seed-firestore.js"
   },
   "dependencies": {
     "firebase": "^13.0.0",

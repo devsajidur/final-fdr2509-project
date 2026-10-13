@@ -9,7 +9,8 @@ import {
   serverTimestamp,
   Unsubscribe,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './config';
+import { ref as dbRef, onValue, set as dbSet } from 'firebase/database';
+import { db, rtdb, isFirebaseConfigured } from './config';
 import { SpecificationItem, FeatureItemData, GalleryItemData } from '@/types';
 import { specificationsContent, featuresContent, galleryContent } from '@/data/site-content';
 
@@ -37,33 +38,65 @@ export interface ContactSubmission {
 
 /**
  * 1. Specifications Realtime Subscription
- * If Firebase is configured, listens for real-time document updates.
- * Otherwise, immediately falls back to initial site data.
+ * Listens to Realtime Database or Cloud Firestore.
+ * Always falls back cleanly to static content on any error or empty response.
  */
 export function subscribeSpecifications(
   callback: (specs: SpecificationItem[]) => void
 ): Unsubscribe {
-  if (!isFirebaseConfigured || !db) {
-    callback(specificationsContent.items);
+  // Always supply initial data immediately for instant render
+  callback(specificationsContent.items);
+
+  if (!isFirebaseConfigured) {
     return () => {};
   }
 
-  const q = query(collection(db, 'specifications'), orderBy('id', 'asc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      if (!snapshot.empty) {
-        const items = snapshot.docs.map((docSnap) => docSnap.data() as SpecificationItem);
-        callback(items);
-      } else {
-        callback(specificationsContent.items);
-      }
-    },
-    (error) => {
-      console.warn('[Firebase] specifications listener error, using fallback:', error);
-      callback(specificationsContent.items);
-    }
-  );
+  // 1A. Try Realtime Database first if URL is configured
+  if (rtdb) {
+    try {
+      const specRef = dbRef(rtdb, 'specifications');
+      const unsubRtdb = onValue(
+        specRef,
+        (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            const list: SpecificationItem[] = Array.isArray(val)
+              ? val.filter(Boolean)
+              : Object.values(val);
+            if (list.length > 0) {
+              callback(list);
+              return;
+            }
+          }
+        },
+        (err) => {
+          console.warn('[Firebase RTDB] specs error, falling back:', err.message);
+        }
+      );
+      return unsubRtdb;
+    } catch {}
+  }
+
+  // 1B. Firestore listener fallback
+  if (db) {
+    try {
+      const q = query(collection(db, 'specifications'), orderBy('id', 'asc'));
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const items = snapshot.docs.map((docSnap) => docSnap.data() as SpecificationItem);
+            callback(items);
+          }
+        },
+        (error) => {
+          console.warn('[Firebase Firestore] specifications error:', error.message);
+        }
+      );
+    } catch {}
+  }
+
+  return () => {};
 }
 
 /**
@@ -72,27 +105,56 @@ export function subscribeSpecifications(
 export function subscribeFeatures(
   callback: (features: FeatureItemData[]) => void
 ): Unsubscribe {
-  if (!isFirebaseConfigured || !db) {
-    callback(featuresContent.items);
+  callback(featuresContent.items);
+
+  if (!isFirebaseConfigured) {
     return () => {};
   }
 
-  const q = query(collection(db, 'features'), orderBy('id', 'asc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      if (!snapshot.empty) {
-        const items = snapshot.docs.map((docSnap) => docSnap.data() as FeatureItemData);
-        callback(items);
-      } else {
-        callback(featuresContent.items);
-      }
-    },
-    (error) => {
-      console.warn('[Firebase] features listener error, using fallback:', error);
-      callback(featuresContent.items);
-    }
-  );
+  if (rtdb) {
+    try {
+      const featRef = dbRef(rtdb, 'features');
+      const unsubRtdb = onValue(
+        featRef,
+        (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            const list: FeatureItemData[] = Array.isArray(val)
+              ? val.filter(Boolean)
+              : Object.values(val);
+            if (list.length > 0) {
+              callback(list);
+              return;
+            }
+          }
+        },
+        (err) => {
+          console.warn('[Firebase RTDB] features error, falling back:', err.message);
+        }
+      );
+      return unsubRtdb;
+    } catch {}
+  }
+
+  if (db) {
+    try {
+      const q = query(collection(db, 'features'), orderBy('id', 'asc'));
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const items = snapshot.docs.map((docSnap) => docSnap.data() as FeatureItemData);
+            callback(items);
+          }
+        },
+        (error) => {
+          console.warn('[Firebase Firestore] features error:', error.message);
+        }
+      );
+    } catch {}
+  }
+
+  return () => {};
 }
 
 /**
@@ -101,94 +163,157 @@ export function subscribeFeatures(
 export function subscribeGallery(
   callback: (items: GalleryItemData[]) => void
 ): Unsubscribe {
-  if (!isFirebaseConfigured || !db) {
-    callback(galleryContent.items);
+  callback(galleryContent.items);
+
+  if (!isFirebaseConfigured) {
     return () => {};
   }
 
-  const q = query(collection(db, 'gallery'), orderBy('id', 'asc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      if (!snapshot.empty) {
-        const items = snapshot.docs.map((docSnap) => docSnap.data() as GalleryItemData);
-        callback(items);
-      } else {
-        callback(galleryContent.items);
-      }
-    },
-    (error) => {
-      console.warn('[Firebase] gallery listener error, using fallback:', error);
-      callback(galleryContent.items);
-    }
-  );
+  if (rtdb) {
+    try {
+      const galleryRef = dbRef(rtdb, 'gallery');
+      const unsubRtdb = onValue(
+        galleryRef,
+        (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            const list: GalleryItemData[] = Array.isArray(val)
+              ? val.filter(Boolean)
+              : Object.values(val);
+            if (list.length > 0) {
+              callback(list);
+              return;
+            }
+          }
+        },
+        (err) => {
+          console.warn('[Firebase RTDB] gallery error, falling back:', err.message);
+        }
+      );
+      return unsubRtdb;
+    } catch {}
+  }
+
+  if (db) {
+    try {
+      const q = query(collection(db, 'gallery'), orderBy('id', 'asc'));
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const items = snapshot.docs.map((docSnap) => docSnap.data() as GalleryItemData);
+            callback(items);
+          }
+        },
+        (error) => {
+          console.warn('[Firebase Firestore] gallery error:', error.message);
+        }
+      );
+    } catch {}
+  }
+
+  return () => {};
 }
 
 /**
- * 4. Submit Quote Request to Firestore 'quotes' collection
+ * 4. Submit Quote Request to Firebase (RTDB and/or Firestore)
  */
 export async function submitQuoteToFirestore(
   quote: QuoteSubmission
 ): Promise<{ success: boolean; id: string; isRealtime: boolean }> {
   const quoteId = `quote_${Date.now()}`;
+  const timestamp = new Date().toISOString();
 
-  if (!isFirebaseConfigured || !db) {
-    // Save to local localStorage simulation
-    try {
-      if (typeof window !== 'undefined') {
-        const existing = JSON.parse(localStorage.getItem('mack_local_quotes') || '[]');
-        existing.push({ ...quote, id: quoteId, submittedAt: new Date().toISOString() });
-        localStorage.setItem('mack_local_quotes', JSON.stringify(existing));
-      }
-    } catch {}
-    return { success: true, id: quoteId, isRealtime: false };
-  }
-
+  // Save to local storage for instant resilience
   try {
-    const docRef = doc(db, 'quotes', quoteId);
-    await setDoc(docRef, {
-      ...quote,
-      id: quoteId,
-      submittedAt: serverTimestamp(),
-    });
-    return { success: true, id: quoteId, isRealtime: true };
-  } catch (error) {
-    console.error('[Firebase] Failed to submit quote to Firestore:', error);
-    return { success: false, id: quoteId, isRealtime: false };
+    if (typeof window !== 'undefined') {
+      const existing = JSON.parse(localStorage.getItem('mack_local_quotes') || '[]');
+      existing.push({ ...quote, id: quoteId, submittedAt: timestamp });
+      localStorage.setItem('mack_local_quotes', JSON.stringify(existing));
+    }
+  } catch {}
+
+  let recordedRealtime = false;
+
+  // Write to Realtime Database if available
+  if (rtdb) {
+    try {
+      await dbSet(dbRef(rtdb, `quotes/${quoteId}`), {
+        ...quote,
+        id: quoteId,
+        submittedAt: timestamp,
+      });
+      recordedRealtime = true;
+    } catch (e) {
+      console.warn('[Firebase RTDB] Quote write warning:', e);
+    }
   }
+
+  // Write to Firestore if available
+  if (db) {
+    try {
+      const docRef = doc(db, 'quotes', quoteId);
+      await setDoc(docRef, {
+        ...quote,
+        id: quoteId,
+        submittedAt: serverTimestamp(),
+      });
+      recordedRealtime = true;
+    } catch (e) {
+      console.warn('[Firebase Firestore] Quote write warning:', e);
+    }
+  }
+
+  return { success: true, id: quoteId, isRealtime: recordedRealtime };
 }
 
 /**
- * 5. Submit Contact Dealer message to Firestore 'leads' collection
+ * 5. Submit Contact Dealer message to Firebase (RTDB and/or Firestore)
  */
 export async function submitContactToFirestore(
   contact: ContactSubmission
 ): Promise<{ success: boolean; id: string; isRealtime: boolean }> {
   const contactId = `lead_${Date.now()}`;
-
-  if (!isFirebaseConfigured || !db) {
-    try {
-      if (typeof window !== 'undefined') {
-        const existing = JSON.parse(localStorage.getItem('mack_local_leads') || '[]');
-        existing.push({ ...contact, id: contactId, submittedAt: new Date().toISOString() });
-        localStorage.setItem('mack_local_leads', JSON.stringify(existing));
-      }
-    } catch {}
-    return { success: true, id: contactId, isRealtime: false };
-  }
+  const timestamp = new Date().toISOString();
 
   try {
-    const docRef = doc(db, 'leads', contactId);
-    await setDoc(docRef, {
-      ...contact,
-      id: contactId,
-      submittedAt: serverTimestamp(),
-    });
-    return { success: true, id: contactId, isRealtime: true };
-  } catch (error) {
-    console.error('[Firebase] Failed to submit lead to Firestore:', error);
-    return { success: false, id: contactId, isRealtime: false };
+    if (typeof window !== 'undefined') {
+      const existing = JSON.parse(localStorage.getItem('mack_local_leads') || '[]');
+      existing.push({ ...contact, id: contactId, submittedAt: timestamp });
+      localStorage.setItem('mack_local_leads', JSON.stringify(existing));
+    }
+  } catch {}
+
+  let recordedRealtime = false;
+
+  if (rtdb) {
+    try {
+      await dbSet(dbRef(rtdb, `leads/${contactId}`), {
+        ...contact,
+        id: contactId,
+        submittedAt: timestamp,
+      });
+      recordedRealtime = true;
+    } catch (e) {
+      console.warn('[Firebase RTDB] Lead write warning:', e);
+    }
   }
+
+  if (db) {
+    try {
+      const docRef = doc(db, 'leads', contactId);
+      await setDoc(docRef, {
+        ...contact,
+        id: contactId,
+        submittedAt: serverTimestamp(),
+      });
+      recordedRealtime = true;
+    } catch (e) {
+      console.warn('[Firebase Firestore] Lead write warning:', e);
+    }
+  }
+
+  return { success: true, id: contactId, isRealtime: recordedRealtime };
 }
 
 /**
@@ -199,27 +324,41 @@ export async function checkFirebaseConnection(): Promise<{
   projectId?: string;
   message: string;
 }> {
-  if (!isFirebaseConfigured || !db) {
+  if (!isFirebaseConfigured) {
     return {
       connected: false,
       message: 'Firebase credentials not found in .env.local (Running in Safe Mock Mode)',
     };
   }
 
-  try {
-    // Quick test read
-    await getDocs(collection(db, 'specifications'));
+  if (rtdb) {
     return {
       connected: true,
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      message: `Successfully connected to Firestore (${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID})`,
-    };
-  } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : String(error);
-    return {
-      connected: false,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      message: `Firestore access error: ${errMessage}`,
+      message: `Connected to Firebase Realtime Database (${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID})`,
     };
   }
+
+  if (db) {
+    try {
+      await getDocs(collection(db, 'specifications'));
+      return {
+        connected: true,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        message: `Successfully connected to Firestore (${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID})`,
+      };
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      return {
+        connected: false,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        message: `Firestore access error: ${errMessage}`,
+      };
+    }
+  }
+
+  return {
+    connected: false,
+    message: 'Firebase initialized without active database service',
+  };
 }

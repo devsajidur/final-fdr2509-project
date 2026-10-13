@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "specifications": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "features": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "gallery": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "quotes": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "leads": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "connection_test": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
