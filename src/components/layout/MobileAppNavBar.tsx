@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { triggerMackModal } from '@/components/ui/InteractionModals';
+import { smoothScrollTo } from '@/lib/smoothScroll';
 
 export function MobileAppNavBar() {
   const [activeTab, setActiveTab] = useState<'home' | 'specs' | 'build' | 'gallery' | 'search'>('home');
@@ -27,10 +28,7 @@ export function MobileAppNavBar() {
 
   const scrollToSection = (id: string, tab: 'home' | 'specs' | 'gallery') => {
     setActiveTab(tab);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    smoothScrollTo(`#${id}`, 65, 750);
   };
 
   return (

@@ -6,6 +6,7 @@ import { navigationItems } from '@/data/site-content';
 import { Button } from '@/components/ui/Button';
 import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
 import { triggerMackModal } from '@/components/ui/InteractionModals';
+import { smoothScrollTo } from '@/lib/smoothScroll';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,8 +19,40 @@ export function Header() {
         toggleBtn?.focus();
       }
     };
+
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a[href^="#"]');
+      if (!target) return;
+      const href = target.getAttribute('href');
+      if (!href || href === '#' || href.length <= 1) return;
+
+      const modalHashes = [
+        '#configure',
+        '#brochure',
+        '#contact-dealer',
+        '#find-dealer',
+        '#request-quote',
+        '#search',
+        '#twitter',
+        '#linkedin',
+        '#facebook',
+      ];
+      if (modalHashes.includes(href)) return;
+
+      const targetEl = document.querySelector(href);
+      if (targetEl) {
+        e.preventDefault();
+        smoothScrollTo(href, 65, 750);
+        window.history.pushState(null, '', href);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('click', handleAnchorClick);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('click', handleAnchorClick);
+    };
   }, [mobileMenuOpen]);
 
   return (
@@ -58,7 +91,12 @@ export function Header() {
               <a
                 key={item.label}
                 href={item.href}
-                className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] ${
+                onClick={(e) => {
+                  e.preventDefault();
+                  smoothScrollTo(item.href, 65, 750);
+                  window.history.pushState(null, '', item.href);
+                }}
+                className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
                   item.isActive
                     ? 'font-medium text-[#111827]'
                     : 'font-normal text-[#4B5563] hover:text-[#111827]'
@@ -141,7 +179,14 @@ export function Header() {
               <a
                 key={item.label}
                 href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  setTimeout(() => {
+                    smoothScrollTo(item.href, 65, 750);
+                    window.history.pushState(null, '', item.href);
+                  }, 120);
+                }}
                 className={`text-[16px] leading-[24px] py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] ${
                   item.isActive
                     ? 'font-medium text-[#111827]'

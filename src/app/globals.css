@@ -37,6 +37,11 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 65px;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -45,6 +50,12 @@ html, body {
   color: #111827;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* In-page navigation anchor offsets */
+#trucks, #parts, #service, #support,
+#hero-section, #specifications-section, #features-section, #gallery-section, #cta-section {
+  scroll-margin-top: 65px;
 }
 
 /* Base custom utility classes matching Figma */

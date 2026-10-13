@@ -6,8 +6,9 @@ export function CallToActionSection() {
   return (
     <section
       id="cta-section"
-      className="w-full bg-[#000000] lg:h-[290px] pt-[64px] pb-12 lg:pb-0 overflow-hidden flex flex-col items-center justify-start text-center"
+      className="w-full bg-[#000000] lg:h-[290px] pt-[64px] pb-12 lg:pb-0 overflow-hidden flex flex-col items-center justify-start text-center relative"
     >
+      <span id="contact" className="sr-only" />
       <div className="w-full max-w-[896px] mx-auto px-4 sm:px-6 flex flex-col items-center">
         {/* Heading: 30px, 700, 36px line-height, #FFFFFF */}
         <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#FFFFFF]">
