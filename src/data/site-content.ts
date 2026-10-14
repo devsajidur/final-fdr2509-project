@@ -1,10 +1,10 @@
 import { NavItem, SpecificationItem, FeatureItemData, GalleryItemData, FooterColumn } from '@/types';
 
 export const navigationItems: NavItem[] = [
-  { label: 'Trucks', href: '#trucks', isActive: true },
-  { label: 'Parts', href: '#parts', isActive: false },
-  { label: 'Service', href: '#service', isActive: false },
-  { label: 'Support', href: '#support', isActive: false },
+  { label: 'Trucks', href: '/trucks' },
+  { label: 'Parts', href: '/parts' },
+  { label: 'Service', href: '/service' },
+  { label: 'Support', href: '/support' },
 ];
 
 export const heroContent = {
@@ -153,17 +153,17 @@ export const footerContent = {
     {
       title: 'Products',
       links: [
-        { label: 'Trucks', href: '#trucks' },
-        { label: 'Engines', href: '#engines' },
-        { label: 'Parts', href: '#parts' },
+        { label: 'Trucks', href: '/trucks' },
+        { label: 'Engines', href: '/trucks#engines' },
+        { label: 'Parts', href: '/parts' },
       ],
     },
     {
       title: 'Support',
       links: [
-        { label: 'Service', href: '#service' },
-        { label: 'Warranty', href: '#warranty' },
-        { label: 'Contact', href: '#contact' },
+        { label: 'Service', href: '/service' },
+        { label: 'Warranty', href: '/service#warranty' },
+        { label: 'Contact', href: '/support#contact' },
       ],
     },
     {

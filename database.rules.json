@@ -2,46 +2,56 @@
   "rules": {
     "specifications": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "features": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "gallery": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "dealers": {
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "quotes": {
-      ".read": "auth != null",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$quoteId": {
-        ".write": "auth != null || !data.exists()",
-        ".validate": "newData.hasChildren(['name', 'email', 'selectedEngine'])"
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || data.child('email').val() === auth.token.email || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.hasChildren(['name', 'email'])"
       }
     },
     "leads": {
-      ".read": "auth != null",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$leadId": {
-        ".write": "auth != null || !data.exists()",
-        ".validate": "newData.hasChildren(['name', 'email', 'message'])"
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || data.child('email').val() === auth.token.email || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.hasChildren(['name', 'email'])"
       }
     },
     "testdrives": {
-      ".read": "auth != null",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$driveId": {
-        ".write": "auth != null || !data.exists()",
-        ".validate": "newData.hasChildren(['customerName', 'email', 'model', 'preferredDate'])"
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || data.child('email').val() === auth.token.email || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.hasChildren(['customerName', 'email'])"
       }
     },
     "users": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        "role": {
+          ".validate": "newData.val() !== 'admin' || (data.exists() && data.val() === 'admin') || root.child('users').child(auth.uid).child('role').val() === 'admin'"
+        }
       }
     },
     "connection_test": {
-      ".read": true,
-      ".write": true
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     }
   }
 }

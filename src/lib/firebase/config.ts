@@ -3,11 +3,6 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getDatabase, Database } from 'firebase/database';
 import { getAuth, Auth } from 'firebase/auth';
 
-/**
- * Firebase Client Configuration
- * Safely initializes Firebase using NEXT_PUBLIC_* environment variables.
- * Gracefully falls back if credentials are not yet supplied.
- */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

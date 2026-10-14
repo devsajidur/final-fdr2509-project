@@ -89,4 +89,3 @@ export interface TestDriveBooking {
   status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
   submittedAt: string;
 }
-

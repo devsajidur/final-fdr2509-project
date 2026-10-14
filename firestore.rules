@@ -1,52 +1,110 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Public read-only collections for website dynamic content
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin = Firestore users/{uid}.role == 'admin'  OR  an allowlisted admin email.
+    // Keep the allowlist in sync with ADMIN_EMAILS in src/lib/adminAccess.ts.
+    //  - sajidhasan164@gmail.com must have a verified email (Google sign-in is verified).
+    //  - admin@macktrucks.com is the shared one-click demo admin (cannot be verified by inbox).
+    //    Remove it from this list (and set NEXT_PUBLIC_DEMO_ADMIN=false) before real production use.
+    function isAllowlistedAdmin() {
+      return isSignedIn() && request.auth.token.email != null && (
+        (request.auth.token.email == 'sajidhasan164@gmail.com' && request.auth.token.email_verified == true) ||
+        request.auth.token.email == 'admin@macktrucks.com'
+      );
+    }
+
+    function isAdmin() {
+      return isAllowlistedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Customer reads only records tied to their own uid or their own sign-in email
+    function ownsRecord() {
+      return isSignedIn() && (
+        resource.data.get('userId', '') == request.auth.uid ||
+        resource.data.get('email', '') == request.auth.token.email
+      );
+    }
+
+    function hasValidEmail() {
+      return request.resource.data.email is string &&
+        request.resource.data.email.matches('.+@.+[.].+');
+    }
+
+    // A new record may never be forged as processed, and may never claim another user's uid.
+    function hasSafeStatus() {
+      return !('status' in request.resource.data) || request.resource.data.status == 'pending';
+    }
+
+    // Signed-in users may create records for themselves (userId == uid, or no userId).
+    // Guests (public website forms) may create records only without any userId.
+    function canCreateRecord() {
+      return hasValidEmail() && hasSafeStatus() && (
+        isAdmin() ||
+        (isSignedIn() && (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid)) ||
+        (!isSignedIn() && !('userId' in request.resource.data))
+      );
+    }
+
+    // Dynamic website showcase content: Public read, Admin-only write
     match /specifications/{specId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
     match /features/{featureId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
     match /gallery/{imageId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
     match /dealers/{dealerId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Public lead generation: Allow visitor creation with validation, deny public listing
+    // Quotes: customers create and read only their own; Admin manages all
     match /quotes/{quoteId} {
-      allow read: if request.auth != null;
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.email is string
-                    && request.resource.data.email.matches('.*@.*\\..*');
-      allow update, delete: if request.auth != null;
+      allow read: if isAdmin() || ownsRecord();
+      allow create: if canCreateRecord();
+      allow update, delete: if isAdmin();
     }
 
+    // Leads / contact + service inquiries: customers create and read only their own; Admin manages all
     match /leads/{leadId} {
-      allow read: if request.auth != null;
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.email is string
-                    && request.resource.data.email.matches('.*@.*\\..*');
-      allow update, delete: if request.auth != null;
+      allow read: if isAdmin() || ownsRecord();
+      allow create: if canCreateRecord();
+      allow update, delete: if isAdmin();
     }
 
+    // Test drive bookings: customers create and read only their own; Admin manages all
     match /testdrives/{driveId} {
-      allow read: if request.auth != null;
-      allow create: if request.resource.data.customerName is string
-                    && request.resource.data.email is string
-                    && request.resource.data.email.matches('.*@.*\\..*');
-      allow update, delete: if request.auth != null;
+      allow read: if isAdmin() || ownsRecord();
+      allow create: if canCreateRecord();
+      allow update, delete: if isAdmin();
     }
 
-    // Each signed-in user may only access their own profile document
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    // Users: Owner can read own profile; Admin can read all.
+    // Owner can create/update their profile but CANNOT self-elevate role to 'admin'.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && (request.resource.data.role != 'admin' || isAdmin());
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
     }
+
+    // Everything else is denied by default.
   }
 }

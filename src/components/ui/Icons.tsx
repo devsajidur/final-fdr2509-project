@@ -1,11 +1,5 @@
 import React from 'react';
 
-/**
- * 12 Exact SVG Vector Components Extracted from Figma
- * Each component is named clearly and accurately with proper accessibility attributes.
- */
-
-// 1. Header Logo Truck Icon
 export function HeaderTruckLogoIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -34,7 +28,6 @@ export function HeaderTruckLogoIcon({ className }: { className?: string }) {
   );
 }
 
-// 2. Engine Spec Icon
 export function EngineSpecIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -63,7 +56,6 @@ export function EngineSpecIcon({ className }: { className?: string }) {
   );
 }
 
-// 3. Fuel Economy Spec Icon
 export function FuelEconomySpecIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -92,7 +84,6 @@ export function FuelEconomySpecIcon({ className }: { className?: string }) {
   );
 }
 
-// 4. GVWR Spec Icon
 export function GvwrSpecIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -121,7 +112,6 @@ export function GvwrSpecIcon({ className }: { className?: string }) {
   );
 }
 
-// 5. Wheelbase Spec Icon
 export function WheelbaseSpecIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -143,7 +133,6 @@ export function WheelbaseSpecIcon({ className }: { className?: string }) {
   );
 }
 
-// 6. Safety First Feature Icon
 export function SafetyFirstIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -172,7 +161,6 @@ export function SafetyFirstIcon({ className }: { className?: string }) {
   );
 }
 
-// 7. Connected Feature Icon
 export function ConnectedIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -194,7 +182,6 @@ export function ConnectedIcon({ className }: { className?: string }) {
   );
 }
 
-// 8. Driver Comfort Feature Icon
 export function DriverComfortIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -216,7 +203,6 @@ export function DriverComfortIcon({ className }: { className?: string }) {
   );
 }
 
-// 9. LinkedIn Footer Icon
 export function LinkedInIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -238,7 +224,6 @@ export function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-// 10. Twitter Footer Icon
 export function TwitterIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -260,7 +245,6 @@ export function TwitterIcon({ className }: { className?: string }) {
   );
 }
 
-// 11. Facebook Footer Icon
 export function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -289,7 +273,6 @@ export function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-// 12. Footer Logo Truck Icon
 export function FooterTruckLogoIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -318,7 +301,6 @@ export function FooterTruckLogoIcon({ className }: { className?: string }) {
   );
 }
 
-// 13. Official Google Multi-Color G Icon for Authentication
 export function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg

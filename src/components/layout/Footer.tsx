@@ -12,14 +12,11 @@ export function Footer() {
   return (
     <footer
       id="main-footer"
-      className="w-full bg-[#111827] lg:h-[313px] pt-[48px] pb-8 lg:pb-0 overflow-hidden text-[#9CA3AF] relative"
+      className="w-full bg-[#111827] min-h-[313px] pt-[48px] pb-8 text-[#9CA3AF] relative"
     >
-      <span id="support" className="sr-only" />
       <div className="w-full max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-0">
-        {/* 4 Columns Grid: 280px each, gap 32px */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[32px] justify-between">
-          {/* Column 1: MACK Logo & Tagline */}
-          <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
+          <div className="w-full max-w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start">
               <div className="w-[32px] h-[32px] bg-[#FFFFFF] rounded-[4px] flex items-center justify-center shrink-0">
                 <FooterTruckLogoIcon />
@@ -33,7 +30,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Column 2: Products */}
           <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Products
@@ -41,18 +37,17 @@ export function Footer() {
             <ul className="space-y-[8px] flex flex-col items-center sm:items-start">
               {footerContent.columns[0].links.map((link) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-[16px] leading-[24px] text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white rounded-[2px]"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 3: Support */}
           <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Support
@@ -60,24 +55,22 @@ export function Footer() {
             <ul className="space-y-[8px] flex flex-col items-center sm:items-start">
               {footerContent.columns[1].links.map((link) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-[16px] leading-[24px] text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white rounded-[2px]"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 4: Connect & Social Icons */}
           <div className="w-full lg:w-[280px] flex flex-col items-center sm:items-start text-center sm:text-left">
             <h4 className="text-[16px] font-semibold leading-[24px] text-[#FFFFFF] mb-[16px]">
               Connect
             </h4>
             <div className="flex items-center justify-center sm:justify-start space-x-[16px] text-[#9CA3AF] pt-[3px]">
-              {/* Twitter / X (Figma: width 16, height 16) */}
               <a
                 href="#twitter"
                 aria-label="Mack Trucks on Twitter"
@@ -86,7 +79,6 @@ export function Footer() {
                 <TwitterIcon />
               </a>
 
-              {/* LinkedIn (Figma: width 14, height 16) */}
               <a
                 href="#linkedin"
                 aria-label="Mack Trucks on LinkedIn"
@@ -95,7 +87,6 @@ export function Footer() {
                 <LinkedInIcon />
               </a>
 
-              {/* Facebook (Figma: width 16, height 16) */}
               <a
                 href="#facebook"
                 aria-label="Mack Trucks on Facebook"
@@ -105,7 +96,6 @@ export function Footer() {
               </a>
             </div>
 
-            {/* Direct Multi-Page Portal Access */}
             <div className="mt-[16px] flex flex-col items-center sm:items-start space-y-[6px] text-[13px]">
               <Link href="/dashboard" className="text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors">
                 Customer Fleet Portal →
@@ -120,7 +110,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Divider & Copyright */}
         <div className="border-t border-white/10 mt-[48px] pt-[24px] pb-[88px] lg:pb-[24px] flex items-center justify-center">
           <p className="text-[14px] sm:text-[16px] leading-[24px] text-[#9CA3AF] text-center px-4">
             {footerContent.copyright}

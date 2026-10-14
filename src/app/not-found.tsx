@@ -5,7 +5,6 @@ import { HeaderTruckLogoIcon } from '@/components/ui/Icons';
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-[#0A0D14] text-white flex flex-col justify-between selection:bg-[#F59E0B] selection:text-black">
-      {/* Top Header */}
       <header className="w-full border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="w-[32px] h-[32px] bg-[#000000] border border-white/20 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
@@ -21,10 +20,8 @@ export default function NotFound() {
         </Link>
       </header>
 
-      {/* Main 404 Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="max-w-[560px] w-full text-center bg-[#111827]/90 border border-white/10 rounded-[20px] p-8 sm:p-12 shadow-2xl backdrop-blur-md">
-          {/* Big Road Icon & 404 Badge */}
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[36px] mb-6">
             🛑
           </div>
@@ -41,7 +38,6 @@ export default function NotFound() {
             The mile marker or highway exit you requested cannot be reached. You may have typed an invalid address or the vehicle has moved.
           </p>
 
-          {/* Quick Route Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/"
@@ -65,7 +61,6 @@ export default function NotFound() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="w-full border-t border-white/10 py-4 px-6 text-center text-[12px] text-gray-500">
         © 2026 Mack Trucks, Inc. Built for the road ahead.
       </footer>

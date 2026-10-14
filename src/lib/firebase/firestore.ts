@@ -6,14 +6,21 @@ import {
   onSnapshot,
   query,
   orderBy,
+  where,
+  limit,
   serverTimestamp,
   updateDoc,
   deleteDoc,
   Unsubscribe,
 } from 'firebase/firestore';
-import { ref as dbRef, onValue, set as dbSet, update as dbUpdate, remove as dbRemove } from 'firebase/database';
-import { db, rtdb, isFirebaseConfigured } from './config';
-import { SpecificationItem, FeatureItemData, GalleryItemData, QuoteRequestRecord, TestDriveBooking } from '@/types';
+import { db, isFirebaseConfigured } from './config';
+import {
+  SpecificationItem,
+  FeatureItemData,
+  GalleryItemData,
+  QuoteRequestRecord,
+  TestDriveBooking,
+} from '@/types';
 import { specificationsContent, featuresContent, galleryContent } from '@/data/site-content';
 
 export interface QuoteSubmission {
@@ -32,75 +39,7 @@ export interface QuoteSubmission {
   estimatedValue?: number;
   status?: QuoteRequestRecord['status'];
   submittedAt?: unknown;
-}
-
-/** Max time (ms) the UI waits for a cloud write acknowledgement before continuing. */
-const WRITE_TIMEOUT_MS = 4000;
-
-const LOCAL_CHANGE_EVENT = 'mack-local-data-changed';
-
-/** Tells live subscribers that local storage changed so lists refresh instantly. */
-function notifyLocalChange(): void {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
-  }
-}
-
-/** Subscribes to local storage changes; returns an unsubscribe function. */
-function onLocalChange(handler: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener(LOCAL_CHANGE_EVENT, handler);
-  window.addEventListener('storage', handler);
-  return () => {
-    window.removeEventListener(LOCAL_CHANGE_EVENT, handler);
-    window.removeEventListener('storage', handler);
-  };
-}
-
-/** Firebase RTDB/Firestore reject `undefined` values, so strip them before writing. */
-function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
-}
-
-/**
- * Resolves true if the task settles successfully within the timeout, false otherwise.
- * Firebase `set`/`setDoc` only resolve after a server ack, so on a slow network, missing
- * database or rejected rules they could hang forever. The SDK keeps retrying queued
- * writes in the background; the UI just must not wait on them.
- */
-async function settleWithin(task: () => Promise<unknown>, label: string): Promise<boolean> {
-  try {
-    const outcome = await Promise.race([
-      task().then(() => 'ok' as const),
-      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), WRITE_TIMEOUT_MS)),
-    ]);
-    if (outcome === 'timeout') {
-      console.warn(`[Firebase] ${label} not acknowledged within ${WRITE_TIMEOUT_MS}ms; saved locally and will sync when possible.`);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.warn(`[Firebase] ${label} failed:`, e instanceof Error ? e.message : e);
-    return false;
-  }
-}
-
-/** Writes a record to RTDB and Firestore in parallel; true if at least one cloud write was acknowledged. */
-async function persistRecord(
-  collectionName: string,
-  id: string,
-  rtdbData: Record<string, unknown>,
-  firestoreData: Record<string, unknown>
-): Promise<boolean> {
-  const jobs: Promise<boolean>[] = [];
-  if (rtdb) {
-    jobs.push(settleWithin(() => dbSet(dbRef(rtdb!, `${collectionName}/${id}`), stripUndefined(rtdbData)), `RTDB ${collectionName} write`));
-  }
-  if (db) {
-    jobs.push(settleWithin(() => setDoc(doc(db!, collectionName, id), stripUndefined(firestoreData)), `Firestore ${collectionName} write`));
-  }
-  const results = await Promise.all(jobs);
-  return results.some(Boolean);
+  userId?: string;
 }
 
 export interface ContactSubmission {
@@ -111,421 +50,360 @@ export interface ContactSubmission {
   subject: string;
   message: string;
   submittedAt?: unknown;
+  userId?: string;
 }
 
-/**
- * 1. Specifications Realtime Subscription
- * Listens to Realtime Database or Cloud Firestore.
- * Always falls back cleanly to static content on any error or empty response.
- */
+/** Max time (ms) the UI waits for a cloud write acknowledgement */
+const WRITE_TIMEOUT_MS = 5000;
+const LOCAL_CHANGE_EVENT = 'mack-local-data-changed';
+
+/** Dispatches event to refresh local listeners across tabs and components */
+function notifyLocalChange(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
+  }
+}
+
+/** Subscribes to local storage changes */
+function onLocalChange(handler: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(LOCAL_CHANGE_EVENT, handler);
+  window.addEventListener('storage', handler);
+  return () => {
+    window.removeEventListener(LOCAL_CHANGE_EVENT, handler);
+    window.removeEventListener('storage', handler);
+  };
+}
+
+/** Strips undefined properties before writing to Firestore */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
+/** Races a task against timeout so UI does not hang if offline */
+async function settleWithin(task: () => Promise<unknown>, label: string): Promise<boolean> {
+  try {
+    const outcome = await Promise.race([
+      task().then(() => 'ok' as const),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), WRITE_TIMEOUT_MS)),
+    ]);
+    if (outcome === 'timeout') {
+      console.warn(`[Firestore] ${label} timed out after ${WRITE_TIMEOUT_MS}ms. Cached locally.`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(`[Firestore] ${label} error:`, error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
+export function subscribeCollection<T extends { id: string }>(
+  collectionName: string,
+  defaultItems: T[],
+  callback: (items: T[]) => void,
+  orderField = 'id'
+): Unsubscribe {
+  callback(defaultItems);
+
+  if (!isFirebaseConfigured || !db) {
+    return () => {};
+  }
+
+  try {
+    const q = query(collection(db, collectionName), orderBy(orderField, 'asc'));
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as unknown as T[];
+          callback(items);
+        }
+      },
+      (error) => {
+        console.warn(`[Firestore] ${collectionName} subscription error:`, error.message);
+      }
+    );
+  } catch (err) {
+    console.warn(`[Firestore] Failed to attach listener for ${collectionName}:`, err);
+    return () => {};
+  }
+}
+
 export function subscribeSpecifications(
   callback: (specs: SpecificationItem[]) => void
 ): Unsubscribe {
-  // Always supply initial data immediately for instant render
-  callback(specificationsContent.items);
-
-  if (!isFirebaseConfigured) {
-    return () => {};
-  }
-
-  // 1A. Try Realtime Database first if URL is configured
-  if (rtdb) {
-    try {
-      const specRef = dbRef(rtdb, 'specifications');
-      const unsubRtdb = onValue(
-        specRef,
-        (snapshot) => {
-          const val = snapshot.val();
-          if (val) {
-            const list: SpecificationItem[] = Array.isArray(val)
-              ? val.filter(Boolean)
-              : Object.values(val);
-            if (list.length > 0) {
-              callback(list);
-              return;
-            }
-          }
-        },
-        (err) => {
-          console.warn('[Firebase RTDB] specs error, falling back:', err.message);
-        }
-      );
-      return unsubRtdb;
-    } catch {}
-  }
-
-  // 1B. Firestore listener fallback
-  if (db) {
-    try {
-      const q = query(collection(db, 'specifications'), orderBy('id', 'asc'));
-      return onSnapshot(
-        q,
-        (snapshot) => {
-          if (!snapshot.empty) {
-            const items = snapshot.docs.map((docSnap) => docSnap.data() as SpecificationItem);
-            callback(items);
-          }
-        },
-        (error) => {
-          console.warn('[Firebase Firestore] specifications error:', error.message);
-        }
-      );
-    } catch {}
-  }
-
-  return () => {};
+  return subscribeCollection<SpecificationItem>(
+    'specifications',
+    specificationsContent.items,
+    callback
+  );
 }
 
-/**
- * 2. Key Features Realtime Subscription
- */
 export function subscribeFeatures(
   callback: (features: FeatureItemData[]) => void
 ): Unsubscribe {
-  callback(featuresContent.items);
-
-  if (!isFirebaseConfigured) {
-    return () => {};
-  }
-
-  if (rtdb) {
-    try {
-      const featRef = dbRef(rtdb, 'features');
-      const unsubRtdb = onValue(
-        featRef,
-        (snapshot) => {
-          const val = snapshot.val();
-          if (val) {
-            const list: FeatureItemData[] = Array.isArray(val)
-              ? val.filter(Boolean)
-              : Object.values(val);
-            if (list.length > 0) {
-              callback(list);
-              return;
-            }
-          }
-        },
-        (err) => {
-          console.warn('[Firebase RTDB] features error, falling back:', err.message);
-        }
-      );
-      return unsubRtdb;
-    } catch {}
-  }
-
-  if (db) {
-    try {
-      const q = query(collection(db, 'features'), orderBy('id', 'asc'));
-      return onSnapshot(
-        q,
-        (snapshot) => {
-          if (!snapshot.empty) {
-            const items = snapshot.docs.map((docSnap) => docSnap.data() as FeatureItemData);
-            callback(items);
-          }
-        },
-        (error) => {
-          console.warn('[Firebase Firestore] features error:', error.message);
-        }
-      );
-    } catch {}
-  }
-
-  return () => {};
+  return subscribeCollection<FeatureItemData>(
+    'features',
+    featuresContent.items,
+    callback
+  );
 }
 
-/**
- * 3. Gallery Items Realtime Subscription
- */
 export function subscribeGallery(
   callback: (items: GalleryItemData[]) => void
 ): Unsubscribe {
-  callback(galleryContent.items);
-
-  if (!isFirebaseConfigured) {
-    return () => {};
-  }
-
-  if (rtdb) {
-    try {
-      const galleryRef = dbRef(rtdb, 'gallery');
-      const unsubRtdb = onValue(
-        galleryRef,
-        (snapshot) => {
-          const val = snapshot.val();
-          if (val) {
-            const list: GalleryItemData[] = Array.isArray(val)
-              ? val.filter(Boolean)
-              : Object.values(val);
-            if (list.length > 0) {
-              callback(list);
-              return;
-            }
-          }
-        },
-        (err) => {
-          console.warn('[Firebase RTDB] gallery error, falling back:', err.message);
-        }
-      );
-      return unsubRtdb;
-    } catch {}
-  }
-
-  if (db) {
-    try {
-      const q = query(collection(db, 'gallery'), orderBy('id', 'asc'));
-      return onSnapshot(
-        q,
-        (snapshot) => {
-          if (!snapshot.empty) {
-            const items = snapshot.docs.map((docSnap) => docSnap.data() as GalleryItemData);
-            callback(items);
-          }
-        },
-        (error) => {
-          console.warn('[Firebase Firestore] gallery error:', error.message);
-        }
-      );
-    } catch {}
-  }
-
-  return () => {};
+  return subscribeCollection<GalleryItemData>(
+    'gallery',
+    galleryContent.items,
+    callback
+  );
 }
 
-/**
- * 4. Submit Quote Request to Firebase (RTDB and/or Firestore)
- */
+function parseEstimatedPrice(price: string): number | undefined {
+  const num = Number(String(price).replace(/[^0-9.]/g, '').split('.')[0]);
+  return Number.isFinite(num) && num > 0 ? num : undefined;
+}
+
 export async function submitQuoteToFirestore(
   quote: QuoteSubmission
-): Promise<{ success: boolean; id: string; isRealtime: boolean }> {
-  const quoteId = `quote_${Date.now()}`;
+): Promise<{ success: boolean; id: string; isRealtime: boolean; error?: string }> {
+  const quoteId = quote.id || `quote_${Date.now()}`;
   const timestamp = new Date().toISOString();
+  const parsedPrice = parseEstimatedPrice(quote.estimatedPrice);
 
-  // Normalise into the shape the admin/customer views read (QuoteRequestRecord)
-  const priceNumber = Number(String(quote.estimatedPrice).replace(/[^0-9.]/g, '').split('.')[0]);
-  const record = stripUndefined({
+  const record: QuoteRequestRecord = stripUndefined({
     ...quote,
     id: quoteId,
     model: quote.model || quote.selectedEngine,
     status: quote.status || 'pending',
-    estimatedValue: quote.estimatedValue ?? (Number.isFinite(priceNumber) && priceNumber > 0 ? priceNumber : undefined),
+    estimatedValue: quote.estimatedValue ?? parsedPrice,
     submittedAt: timestamp,
   });
 
-  // Save to local storage first for instant resilience
   try {
     if (typeof window !== 'undefined') {
-      const existing = JSON.parse(localStorage.getItem('mack_local_quotes') || '[]');
-      existing.push(record);
+      const existing: QuoteRequestRecord[] = JSON.parse(
+        localStorage.getItem('mack_local_quotes') || '[]'
+      );
+      existing.unshift(record);
       localStorage.setItem('mack_local_quotes', JSON.stringify(existing));
       notifyLocalChange();
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[Cache] Could not save quote locally:', err);
+  }
 
-  const recordedRealtime = await persistRecord('quotes', quoteId, record, {
-    ...record,
-    submittedAt: serverTimestamp(),
-  });
+  let isRealtime = false;
+  if (db) {
+    isRealtime = await settleWithin(
+      () =>
+        setDoc(
+          doc(db!, 'quotes', quoteId),
+          stripUndefined({
+            ...record,
+            submittedAt: serverTimestamp(),
+          })
+        ),
+      `Quote creation (${quoteId})`
+    );
+  }
 
-  return { success: true, id: quoteId, isRealtime: recordedRealtime };
+  return { success: true, id: quoteId, isRealtime };
 }
 
-/**
- * 5. Submit Contact Dealer message to Firebase (RTDB and/or Firestore)
- */
 export async function submitContactToFirestore(
   contact: ContactSubmission
-): Promise<{ success: boolean; id: string; isRealtime: boolean }> {
-  const contactId = `lead_${Date.now()}`;
+): Promise<{ success: boolean; id: string; isRealtime: boolean; error?: string }> {
+  const contactId = contact.id || `lead_${Date.now()}`;
   const timestamp = new Date().toISOString();
   const record = stripUndefined({ ...contact, id: contactId, submittedAt: timestamp });
 
   try {
     if (typeof window !== 'undefined') {
       const existing = JSON.parse(localStorage.getItem('mack_local_leads') || '[]');
-      existing.push(record);
+      existing.unshift(record);
       localStorage.setItem('mack_local_leads', JSON.stringify(existing));
+      notifyLocalChange();
     }
-  } catch {}
-
-  const recordedRealtime = await persistRecord('leads', contactId, record, {
-    ...record,
-    submittedAt: serverTimestamp(),
-  });
-
-  return { success: true, id: contactId, isRealtime: recordedRealtime };
-}
-
-/**
- * 6. Health & Diagnostics Check
- */
-export async function checkFirebaseConnection(): Promise<{
-  connected: boolean;
-  projectId?: string;
-  message: string;
-}> {
-  if (!isFirebaseConfigured) {
-    return {
-      connected: false,
-      message: 'Firebase credentials not found in .env.local (running in offline mode)',
-    };
+  } catch (err) {
+    console.warn('[Cache] Could not save lead locally:', err);
   }
 
-  if (rtdb) {
-    return {
-      connected: true,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      message: `Connected to Firebase Realtime Database (${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID})`,
-    };
-  }
-
+  let isRealtime = false;
   if (db) {
-    try {
-      await getDocs(collection(db, 'specifications'));
-      return {
-        connected: true,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        message: `Successfully connected to Firestore (${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID})`,
-      };
-    } catch (error: unknown) {
-      const errMessage = error instanceof Error ? error.message : String(error);
-      return {
-        connected: false,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        message: `Firestore access error: ${errMessage}`,
-      };
-    }
+    isRealtime = await settleWithin(
+      () =>
+        setDoc(
+          doc(db!, 'leads', contactId),
+          stripUndefined({
+            ...record,
+            submittedAt: serverTimestamp(),
+          })
+        ),
+      `Lead creation (${contactId})`
+    );
   }
 
-  return {
-    connected: false,
-    message: 'Firebase initialized without active database service',
-  };
+  return { success: true, id: contactId, isRealtime };
 }
 
-/**
- * 7. Realtime Subscription for All Quotes (Admin View)
- */
+/** Reads quotes cached in browser */
+function getLocalQuotes(): QuoteRequestRecord[] {
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('mack_local_quotes');
+      if (stored) return JSON.parse(stored);
+    }
+  } catch (err) {
+    console.warn('[Cache] Could not read local quotes:', err);
+  }
+  return [];
+}
+
 export function subscribeAllQuotes(
   callback: (quotes: QuoteRequestRecord[]) => void
-): () => void {
-  // Read quotes saved in the browser, or fall back to sample data
-  const getLocalQuotes = (): QuoteRequestRecord[] => {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('mack_local_quotes');
-        if (stored) return JSON.parse(stored);
-      }
-    } catch {}
-    return [
-      {
-        id: 'quote_demo_101',
-        name: 'Rahim Chowdhury',
-        email: 'customer@fleetlogistics.com',
-        phone: '+1 (555) 382-9901',
-        company: 'Atlas Fleet Logistics',
-        fleetSize: '25+ Trucks',
-        model: 'Mack Anthem 70" Stand-Up Sleeper',
-        timeFrame: 'Within 30 Days',
-        message: 'Looking for 12 units configured with Mack MP8 505HP and mDRIVE transmission.',
-        status: 'reviewing',
-        submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        estimatedValue: 2450000,
-      },
-      {
-        id: 'quote_demo_102',
-        name: 'Michael Vance',
-        email: 'mvance@transcorp.com',
-        phone: '+1 (555) 441-2098',
-        company: 'Vance Freightlines',
-        fleetSize: '10-25 Trucks',
-        model: 'Mack Anthem Day Cab 6x4',
-        timeFrame: '1-3 Months',
-        message: 'Need pricing with regional fuel economy package and warranty options.',
-        status: 'pending',
-        submittedAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-        estimatedValue: 780000,
-      }
-    ];
-  };
+): Unsubscribe {
+  let remoteQuotes: QuoteRequestRecord[] = [];
 
-  let remote: QuoteRequestRecord[] = [];
   const emit = () => {
-    const merged = [...remote];
-    for (const l of getLocalQuotes()) {
-      if (!merged.some((m) => m.id === l.id)) merged.push(l);
+    // With Firebase configured the admin sees only real database records; the browser cache is
+    // merged in solely for offline/local mode.
+    const local = db && isFirebaseConfigured ? [] : getLocalQuotes();
+    const map = new Map<string, QuoteRequestRecord>();
+    for (const q of remoteQuotes) map.set(q.id, q);
+    for (const l of local) {
+      if (!map.has(l.id)) map.set(l.id, l);
     }
-    merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-    callback(merged);
+    const combined = Array.from(map.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+    callback(combined);
   };
 
   emit();
   const offLocal = onLocalChange(emit);
 
-  let offRemote: () => void = () => {};
-  if (rtdb) {
-    try {
-      const qRef = dbRef(rtdb, 'quotes');
-      offRemote = onValue(
-        qRef,
-        (snapshot) => {
-          const val = snapshot.val();
-          if (val) {
-            remote = Array.isArray(val)
-              ? val.filter(Boolean)
-              : Object.entries(val).map(([id, item]) => {
-                  const q = item as Record<string, unknown>;
-                  return {
-                    id: (q.id as string) || id,
-                    name: (q.name as string) || 'Fleet Inquirer',
-                    email: (q.email as string) || 'client@fleet.com',
-                    phone: (q.phone as string) || '',
-                    company: (q.company as string) || 'Logistics Partner',
-                    fleetSize: (q.fleetSize as string) || '5-20 Units',
-                    model: (q.model as string) || (q.selectedEngine as string) || 'Mack Anthem MP8',
-                    timeFrame: (q.timeFrame as string) || 'Immediate',
-                    message: (q.message as string) || `Estimated Price: ${q.estimatedPrice || '$210,000'}`,
-                    status: (q.status as QuoteRequestRecord['status']) || 'pending',
-                    submittedAt: (q.submittedAt as string) || new Date().toISOString(),
-                    estimatedValue: typeof q.estimatedValue === 'number' ? q.estimatedValue : 210000,
-                  };
-                });
-            emit();
-          }
-        },
-        (err) => console.warn('[RTDB Quotes error]:', err.message)
-      );
-    } catch {}
+  if (!db || !isFirebaseConfigured) {
+    return () => offLocal();
   }
 
-  return () => {
-    offLocal();
-    offRemote();
-  };
+  try {
+    const q = query(collection(db, 'quotes'), orderBy('submittedAt', 'desc'));
+    const offFirestore = onSnapshot(
+      q,
+      (snapshot) => {
+        remoteQuotes = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          let submittedAt = new Date().toISOString();
+          if (data.submittedAt && typeof data.submittedAt.toDate === 'function') {
+            submittedAt = data.submittedAt.toDate().toISOString();
+          } else if (typeof data.submittedAt === 'string') {
+            submittedAt = data.submittedAt;
+          }
+          return {
+            id: docSnap.id,
+            ...data,
+            submittedAt,
+          } as QuoteRequestRecord;
+        });
+        emit();
+      },
+      (error) => {
+        console.warn('[Firestore] Admin quotes subscription error:', error.message);
+        emit();
+      }
+    );
+
+    return () => {
+      offLocal();
+      offFirestore();
+    };
+  } catch (err) {
+    console.warn('[Firestore] Error attaching admin quotes listener:', err);
+    return () => offLocal();
+  }
 }
 
-/**
- * 8. Realtime Subscription for Customer Quotes
- */
 export function subscribeUserQuotes(
   userEmail: string,
   callback: (quotes: QuoteRequestRecord[]) => void
-): () => void {
-  return subscribeAllQuotes((allQuotes) => {
-    const normalized = userEmail.toLowerCase().trim();
-    const userQuotes = allQuotes.filter((q) => q.email?.toLowerCase().trim() === normalized);
-    callback(userQuotes);
-  });
+): Unsubscribe {
+  if (!userEmail) {
+    callback([]);
+    return () => {};
+  }
+
+  const normalized = userEmail.toLowerCase().trim();
+
+  let remoteQuotes: QuoteRequestRecord[] = [];
+
+  const emit = () => {
+    const local = getLocalQuotes().filter(
+      (q) => q.email?.toLowerCase().trim() === normalized
+    );
+    const map = new Map<string, QuoteRequestRecord>();
+    for (const q of remoteQuotes) map.set(q.id, q);
+    for (const l of local) {
+      if (!map.has(l.id)) map.set(l.id, l);
+    }
+    const combined = Array.from(map.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+    callback(combined);
+  };
+
+  emit();
+  const offLocal = onLocalChange(emit);
+
+  if (!db || !isFirebaseConfigured) {
+    return () => offLocal();
+  }
+
+  try {
+    const q = query(collection(db, 'quotes'), where('email', '==', normalized));
+    const offFirestore = onSnapshot(
+      q,
+      (snapshot) => {
+        remoteQuotes = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          let submittedAt = new Date().toISOString();
+          if (data.submittedAt && typeof data.submittedAt.toDate === 'function') {
+            submittedAt = data.submittedAt.toDate().toISOString();
+          } else if (typeof data.submittedAt === 'string') {
+            submittedAt = data.submittedAt;
+          }
+          return {
+            id: docSnap.id,
+            ...data,
+            submittedAt,
+          } as QuoteRequestRecord;
+        });
+        emit();
+      },
+      (error) => {
+        console.warn('[Firestore] User quotes subscription error:', error.message);
+        emit();
+      }
+    );
+
+    return () => {
+      offLocal();
+      offFirestore();
+    };
+  } catch (err) {
+    console.warn('[Firestore] Error attaching user quotes listener:', err);
+    return () => offLocal();
+  }
 }
 
-/**
- * 9. Update Quote Status in Firebase (RTDB and Firestore)
- */
 export async function updateQuoteStatusInFirebase(
   quoteId: string,
   newStatus: QuoteRequestRecord['status']
 ): Promise<boolean> {
-  // Update local storage
   try {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('mack_local_quotes');
@@ -539,53 +417,61 @@ export async function updateQuoteStatusInFirebase(
         }
       }
     }
-  } catch {}
-
-  const jobs: Promise<boolean>[] = [];
-  if (rtdb) {
-    jobs.push(settleWithin(() => dbUpdate(dbRef(rtdb!, `quotes/${quoteId}`), { status: newStatus }), 'RTDB quote status update'));
+  } catch (err) {
+    console.warn('[Cache] Could not update quote status locally:', err);
   }
+
   if (db) {
-    jobs.push(settleWithin(() => updateDoc(doc(db!, 'quotes', quoteId), { status: newStatus }), 'Firestore quote status update'));
+    return settleWithin(
+      () => updateDoc(doc(db!, 'quotes', quoteId), { status: newStatus }),
+      `Quote status update (${quoteId})`
+    );
   }
-  await Promise.all(jobs);
-
-  // Local copy is already updated, so the UI treats the change as applied.
   return true;
 }
 
-/**
- * 10. Delete Quote from Firebase
- */
 export async function deleteQuoteFromFirebase(quoteId: string): Promise<boolean> {
   try {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('mack_local_quotes');
       if (stored) {
         const list: QuoteRequestRecord[] = JSON.parse(stored);
-        localStorage.setItem('mack_local_quotes', JSON.stringify(list.filter((q) => q.id !== quoteId)));
+        localStorage.setItem(
+          'mack_local_quotes',
+          JSON.stringify(list.filter((q) => q.id !== quoteId))
+        );
         notifyLocalChange();
       }
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[Cache] Could not delete quote locally:', err);
+  }
 
-  const jobs: Promise<boolean>[] = [];
-  if (rtdb) {
-    jobs.push(settleWithin(() => dbRemove(dbRef(rtdb!, `quotes/${quoteId}`)), 'RTDB quote delete'));
-  }
   if (db) {
-    jobs.push(settleWithin(() => deleteDoc(doc(db!, 'quotes', quoteId)), 'Firestore quote delete'));
+    return settleWithin(
+      () => deleteDoc(doc(db!, 'quotes', quoteId)),
+      `Quote deletion (${quoteId})`
+    );
   }
-  await Promise.all(jobs);
   return true;
 }
 
-/**
- * 11. Book Test Drive
- */
+/** Reads test drives cached in browser */
+function getLocalTestDrives(): TestDriveBooking[] {
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('mack_local_testdrives');
+      if (stored) return JSON.parse(stored);
+    }
+  } catch (err) {
+    console.warn('[Cache] Could not read local test drives:', err);
+  }
+  return [];
+}
+
 export async function bookTestDrive(
   booking: Omit<TestDriveBooking, 'id' | 'submittedAt'>
-): Promise<{ success: boolean; id: string }> {
+): Promise<{ success: boolean; id: string; error?: string }> {
   const id = `testdrive_${Date.now()}`;
   const record: TestDriveBooking = {
     ...booking,
@@ -596,106 +482,136 @@ export async function bookTestDrive(
 
   try {
     if (typeof window !== 'undefined') {
-      const existing = JSON.parse(localStorage.getItem('mack_local_testdrives') || '[]');
+      const existing = getLocalTestDrives();
       existing.unshift(record);
       localStorage.setItem('mack_local_testdrives', JSON.stringify(existing));
       notifyLocalChange();
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[Cache] Could not save test drive locally:', err);
+  }
 
-  await persistRecord('testdrives', id, { ...record }, { ...record });
+  if (db) {
+    await settleWithin(
+      () =>
+        setDoc(
+          doc(db!, 'testdrives', id),
+          stripUndefined({
+            ...record,
+            submittedAt: serverTimestamp(),
+          })
+        ),
+      `Test drive booking (${id})`
+    );
+  }
 
   return { success: true, id };
 }
 
-/**
- * 12. Subscribe to Test Drives
- */
 export function subscribeTestDrives(
   callback: (bookings: TestDriveBooking[]) => void
-): () => void {
-  const getLocal = (): TestDriveBooking[] => {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('mack_local_testdrives');
-        if (stored) return JSON.parse(stored);
-      }
-    } catch {}
-    return [
-      {
-        id: 'testdrive_101',
-        customerName: 'Rahim Chowdhury',
-        email: 'customer@fleetlogistics.com',
-        phone: '+1 (555) 382-9901',
-        model: 'Mack Anthem 70" Sleeper',
-        preferredDate: '2026-10-25',
-        preferredLocation: 'Mack Regional Dealer — Chicago North Hub',
-        status: 'confirmed',
-        submittedAt: new Date().toISOString(),
-      }
-    ];
-  };
+): Unsubscribe {
+  let remoteDrives: TestDriveBooking[] = [];
 
-  let remote: TestDriveBooking[] = [];
   const emit = () => {
-    const merged = [...remote];
-    for (const l of getLocal()) {
-      if (!merged.some((m) => m.id === l.id)) merged.push(l);
+    const local = db && isFirebaseConfigured ? [] : getLocalTestDrives();
+    const map = new Map<string, TestDriveBooking>();
+    for (const d of remoteDrives) map.set(d.id, d);
+    for (const l of local) {
+      if (!map.has(l.id)) map.set(l.id, l);
     }
-    merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-    callback(merged);
+    const combined = Array.from(map.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+    callback(combined);
   };
 
   emit();
   const offLocal = onLocalChange(emit);
 
-  let offRemote: () => void = () => {};
-  if (rtdb) {
-    try {
-      const ref = dbRef(rtdb, 'testdrives');
-      offRemote = onValue(
-        ref,
-        (snap) => {
-          const val = snap.val();
-          if (val) {
-            remote = Object.values(val) as TestDriveBooking[];
-            emit();
-          }
-        },
-        (err) => console.warn('[RTDB Test drives error]:', err.message)
-      );
-    } catch {}
+  if (!db || !isFirebaseConfigured) {
+    return () => offLocal();
   }
 
-  return () => {
-    offLocal();
-    offRemote();
-  };
+  try {
+    const q = query(collection(db, 'testdrives'), orderBy('submittedAt', 'desc'));
+    const offFirestore = onSnapshot(
+      q,
+      (snapshot) => {
+        remoteDrives = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          let submittedAt = new Date().toISOString();
+          if (data.submittedAt && typeof data.submittedAt.toDate === 'function') {
+            submittedAt = data.submittedAt.toDate().toISOString();
+          } else if (typeof data.submittedAt === 'string') {
+            submittedAt = data.submittedAt;
+          }
+          return {
+            id: docSnap.id,
+            ...data,
+            submittedAt,
+          } as TestDriveBooking;
+        });
+        emit();
+      },
+      (error) => {
+        console.warn('[Firestore] Test drives subscription error:', error.message);
+        emit();
+      }
+    );
+
+    return () => {
+      offLocal();
+      offFirestore();
+    };
+  } catch (err) {
+    console.warn('[Firestore] Error attaching test drives listener:', err);
+    return () => offLocal();
+  }
 }
 
-/**
- * 13. Update Specification Live in Firebase
- */
 export async function updateSpecificationInFirebase(
   specId: string,
   data: Partial<SpecificationItem>
 ): Promise<boolean> {
-  if (rtdb) {
-    try {
-      await dbUpdate(dbRef(rtdb, `specifications/${specId}`), data);
-      return true;
-    } catch (e) {
-      console.warn('[RTDB spec update error]:', e);
-    }
-  }
   if (db) {
-    try {
-      await updateDoc(doc(db, 'specifications', specId), data);
-      return true;
-    } catch (e) {
-      console.warn('[Firestore spec update error]:', e);
-    }
+    return settleWithin(
+      () => updateDoc(doc(db!, 'specifications', specId), stripUndefined(data as Record<string, unknown>)),
+      `Specification update (${specId})`
+    );
   }
   return false;
 }
 
+export async function checkFirebaseConnection(): Promise<{
+  connected: boolean;
+  projectId?: string;
+  message: string;
+  latencyMs?: number;
+}> {
+  if (!isFirebaseConfigured || !db) {
+    return {
+      connected: false,
+      message: 'Firebase credentials missing or offline mode enabled',
+    };
+  }
+
+  try {
+    const start = Date.now();
+    await getDocs(query(collection(db, 'specifications'), limit(1)));
+    const latencyMs = Date.now() - start;
+    return {
+      connected: true,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      message: `Connected to Cloud Firestore (${latencyMs}ms)`,
+      latencyMs,
+    };
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : String(error);
+    return {
+      connected: false,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      message: `Firestore access error: ${errMessage}`,
+    };
+  }
+}

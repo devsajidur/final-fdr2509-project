@@ -11,7 +11,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'Mack Anthem® | Built for the Road Ahead',
+  title: 'Mack Anthem | Built for the Road Ahead',
   description:
     'The Mack Anthem combines proven reliability with advanced technology and driver comfort. Engineered for long-haul efficiency and built to handle the toughest jobs.',
   keywords: ['Mack Anthem', 'Mack Trucks', 'Highway Truck', 'Commercial Vehicles', 'MP8 Engine'],

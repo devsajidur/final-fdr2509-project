@@ -74,7 +74,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0D14] text-white flex flex-col justify-between selection:bg-[#F59E0B] selection:text-black">
-      {/* Header */}
       <header className="w-full border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-3">
           <div className="w-[32px] h-[32px] bg-[#000000] border border-white/20 rounded-[4px] flex items-center justify-center shrink-0 shadow-sm">
@@ -91,7 +90,6 @@ export default function RegisterPage() {
         </Link>
       </header>
 
-      {/* Main Form */}
       <main className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[540px] bg-[#111827]/90 border border-white/10 rounded-[16px] p-6 sm:p-8 shadow-2xl backdrop-blur-md">
           <div className="text-center mb-6">
@@ -103,7 +101,6 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {/* Quick Google Sign-Up Button */}
           <div className="mb-5">
             <button
               id="google-signup-btn"
@@ -147,7 +144,7 @@ export default function RegisterPage() {
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="e.g. Rahim Chowdhury"
+                  placeholder="e.g. Marcus Vance"
                   className="w-full bg-[#1F2937] border border-gray-700 rounded-[8px] px-3.5 py-2.5 text-white placeholder-gray-500 text-[14px] focus:outline-none focus:border-amber-400 transition-colors"
                 />
               </div>

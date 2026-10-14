@@ -22,6 +22,20 @@ export function Header() {
   const [portalOpen, setPortalOpen] = useState(false);
   const portalDropdownRef = useRef<HTMLDivElement>(null);
 
+  /** A nav route is active on its own page and on any nested sub-route */
+  const isRouteActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  /** Logo always goes to the homepage; when already there, glide back to the top */
+  const handleLogoClick = () => {
+    setMobileMenuOpen(false);
+    if (pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.location.hash) {
+        window.history.replaceState(null, '', '/');
+      }
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -89,57 +103,46 @@ export function Header() {
       }}
     >
       <div className="w-full max-w-[1216px] mx-auto h-[64px] px-4 sm:px-6 lg:px-0 flex items-center justify-between">
-        {/* Left Group: Brand + Desktop Nav (Figma: left: 0, width: 451.95px, gap: 32px) */}
         <div className="flex items-center space-x-[32px]">
           <Link
             href="/"
+            onClick={handleLogoClick}
             className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px]"
             aria-label="Mack Anthem Home"
           >
-            {/* Logo Box: 32x32px, bg #000000, radius 4px */}
             <div className="w-[32px] h-[32px] bg-[#000000] rounded-[4px] flex items-center justify-center shrink-0">
               <HeaderTruckLogoIcon />
             </div>
 
-            {/* Brand text: offset 40px from group origin (8px gap after 32px box) */}
             <span className="ml-[8px] text-[20px] font-bold leading-[28px] text-[#111827]">
               MACK
             </span>
           </Link>
 
-          {/* Desktop Navigation (grouped with Brand in Figma) */}
           <nav
             className="hidden md:flex items-center space-x-[32px]"
             aria-label="Main Navigation"
           >
             {navigationItems.map((item) => {
-              const pageRoute = `/${item.label.toLowerCase()}`;
-              const isCurrentPage = pathname === pageRoute;
+              const isCurrentPage = isRouteActive(item.href);
               return (
-                <a
+                <Link
                   key={item.label}
-                  href={pathname === '/' ? item.href : pageRoute}
-                  onClick={(e) => {
-                    if (pathname === '/') {
-                      e.preventDefault();
-                      smoothScrollTo(item.href, 65);
-                      window.history.pushState(null, '', item.href);
-                    }
-                  }}
-                  className={`text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
-                    (pathname === '/' && item.isActive) || isCurrentPage
-                      ? 'font-medium text-[#111827]'
+                  href={item.href}
+                  aria-current={isCurrentPage ? 'page' : undefined}
+                  className={`relative text-[16px] leading-[24px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[4px] cursor-pointer ${
+                    isCurrentPage
+                      ? 'font-semibold text-[#111827] after:absolute after:left-0 after:right-0 after:-bottom-[21px] after:h-[2px] after:bg-[#111827]'
                       : 'font-normal text-[#4B5563] hover:text-[#111827]'
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>
         </div>
 
-        {/* Right Actions Desktop: Search + Fleet Portal + Contact Dealer */}
         <div className="hidden md:flex items-center space-x-[20px] lg:space-x-[24px]">
           <button
             type="button"
@@ -162,7 +165,6 @@ export function Header() {
             </svg>
           </button>
 
-          {/* Fleet Portal Account Popover Trigger */}
           <div className="relative" ref={portalDropdownRef}>
             {mounted && user ? (
               <button
@@ -227,11 +229,10 @@ export function Header() {
               </button>
             )}
 
-            {/* Dropdown Menu */}
             {portalOpen && (
               <div
                 id="header-portal-popover"
-                className="absolute right-0 top-[48px] w-[310px] bg-[#111827] text-white border border-white/15 rounded-[12px] shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                className="absolute right-0 top-[48px] w-[calc(100vw-2rem)] max-w-[310px] bg-[#111827] text-white border border-white/15 rounded-[12px] shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
               >
                 {mounted && user ? (
                   <>
@@ -337,7 +338,6 @@ export function Header() {
                     </div>
 
                     <div className="pt-3 space-y-2.5">
-                      {/* Google sign in */}
                       <button
                         id="header-google-signin-btn"
                         type="button"
@@ -397,7 +397,6 @@ export function Header() {
           </Button>
         </div>
 
-        {/* Mobile Menu Button */}
         <div className="flex md:hidden items-center">
           <button
             type="button"
@@ -424,7 +423,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div
           id="mobile-navigation-drawer"
@@ -432,32 +430,21 @@ export function Header() {
         >
           <nav className="flex flex-col space-y-4" aria-label="Mobile Navigation">
             {navigationItems.map((item) => {
-              const pageRoute = `/${item.label.toLowerCase()}`;
-              const isCurrentPage = pathname === pageRoute;
+              const isCurrentPage = isRouteActive(item.href);
               return (
-                <a
+                <Link
                   key={item.label}
-                  href={pathname === '/' ? item.href : pageRoute}
-                  onClick={(e) => {
-                    if (pathname === '/') {
-                      e.preventDefault();
-                      setMobileMenuOpen(false);
-                      setTimeout(() => {
-                        smoothScrollTo(item.href, 65);
-                        window.history.pushState(null, '', item.href);
-                      }, 80);
-                    } else {
-                      setMobileMenuOpen(false);
-                    }
-                  }}
+                  href={item.href}
+                  aria-current={isCurrentPage ? 'page' : undefined}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`text-[16px] leading-[24px] py-2 px-3 text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-[8px] active:bg-gray-100 ${
-                    (pathname === '/' && item.isActive) || isCurrentPage
-                      ? 'font-semibold text-[#111827] bg-gray-50'
-                      : 'font-normal text-[#4B5563] hover:text-[#111827] hover:bg-gray-50'
+                    isCurrentPage
+                      ? 'font-semibold text-[#111827] bg-gray-100 border border-gray-200'
+                      : 'font-normal text-[#4B5563] hover:text-[#111827] hover:bg-gray-50 border border-transparent'
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               );
             })}
             <div className="pt-2 flex flex-col space-y-2">
@@ -487,50 +474,11 @@ export function Header() {
               </Button>
             </div>
 
-            {/* Direct Commercial Hub Links */}
-            <div className="pt-2 border-t border-gray-100">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center mb-1.5">
-                Commercial Hub Pages
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 text-[12px]">
-                <Link
-                  href="/trucks"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
-                >
-                  🚚 Truck Models
-                </Link>
-                <Link
-                  href="/parts"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
-                >
-                  ⚙️ Genuine Parts
-                </Link>
-                <Link
-                  href="/service"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
-                >
-                  🔧 Uptime Service
-                </Link>
-                <Link
-                  href="/support"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-2 py-1.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-center border border-gray-200"
-                >
-                  📞 Fleet Support
-                </Link>
-              </div>
-            </div>
-
-            {/* Multi-Page Portals (Customer & Admin) */}
             <div className="pt-3 border-t border-gray-200 flex flex-col space-y-2">
               <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center">
                 Enterprise & Customer Fleet Access
               </div>
 
-              {/* Google sign in (mobile) */}
               {mounted && !user && (
                 <button
                   type="button"

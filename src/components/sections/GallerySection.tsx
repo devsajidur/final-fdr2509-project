@@ -22,15 +22,13 @@ export function GallerySection() {
   return (
     <section
       id="gallery-section"
-      className="w-full bg-[#F9FAFB] lg:h-[431px] pt-[64px] pb-12 lg:pb-0 overflow-hidden"
+      className="w-full bg-[#F9FAFB] min-h-[431px] pt-[64px] pb-16"
     >
       <div className="w-full max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-0 flex flex-col items-center">
-        {/* Title: 30px, 700, 36px line-height, center, margin bottom 48px */}
         <h2 className="text-[26px] sm:text-[30px] font-bold leading-[36px] text-[#111827] text-center mb-[48px]">
           {galleryContent.title}
         </h2>
 
-        {/* 3 Images Grid: Gap 24px, total 1216px, height ~219px */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px] w-full max-w-[1216px] justify-items-center">
           {items.map((item, index) => (
             <div

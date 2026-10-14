@@ -1,18 +1,15 @@
-/**
- * Firestore Database Seeder Script
- * Usage: node scripts/seed-firestore.js
- * Automatically seeds specifications, features, and gallery collections into Firestore.
- */
+// Seeds specifications, features and gallery into Firestore.
+// Usage: ADMIN_EMAIL=... ADMIN_PASSWORD=... node scripts/seed-firestore.js
 
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, setDoc } = require('firebase/firestore');
+const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require('firebase/auth');
 const fs = require('fs');
 
-// Read environment from .env.local or .env
 function loadEnv() {
   const envPath = fs.existsSync('.env.local') ? '.env.local' : fs.existsSync('.env') ? '.env' : null;
   if (!envPath) {
-    console.error('❌ Error: No .env.local or .env file found. Please create .env.local with your Firebase credentials.');
+    console.error('Error: No .env.local or .env file found. Please create .env.local with your Firebase credentials.');
     process.exit(1);
   }
 
@@ -39,14 +36,14 @@ const firebaseConfig = {
 };
 
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  console.error('❌ Error: NEXT_PUBLIC_FIREBASE_API_KEY or NEXT_PUBLIC_FIREBASE_PROJECT_ID missing in .env.local');
+  console.error('Error: NEXT_PUBLIC_FIREBASE_API_KEY or NEXT_PUBLIC_FIREBASE_PROJECT_ID missing in .env.local');
   process.exit(1);
 }
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Data payloads
 const specifications = [
   {
     id: 'spec-1',
@@ -129,32 +126,76 @@ const gallery = [
   }
 ];
 
-async function seed() {
-  console.log(`🚀 Connecting to Firebase project "${firebaseConfig.projectId}"...`);
+async function authenticateAdmin() {
+  const adminEmail = env.ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+  const adminPassword = env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    console.warn('ADMIN_EMAIL / ADMIN_PASSWORD not set; seeding without admin sign-in.');
+    return null;
+  }
 
-  // Seed specs
+  console.log(`Signing in as ${adminEmail}...`);
+  try {
+    const cred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+    return cred.user;
+  } catch (err) {
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+      try {
+        console.log(`Admin user does not exist yet. Creating account for ${adminEmail}...`);
+        const cred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
+        return cred.user;
+      } catch (createErr) {
+        console.warn(`Could not create admin via client auth: ${createErr.message}`);
+      }
+    } else {
+      console.warn(`Admin sign-in returned: ${err.message}`);
+    }
+  }
+  return null;
+}
+
+async function seed() {
+  console.log(`Connecting to Firebase project "${firebaseConfig.projectId}"...`);
+
+  const adminUser = await authenticateAdmin();
+  if (adminUser) {
+    await setDoc(
+      doc(db, 'users', adminUser.uid),
+      {
+        uid: adminUser.uid,
+        email: adminUser.email,
+        displayName: 'Mack Corporate Operations',
+        role: 'admin',
+        company: 'Mack Trucks North America Inc.',
+        phone: '+1 (800) 866-1177',
+        fleetSize: 'OEM Operations',
+        createdAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    console.log(`  ✓ Admin role verified for ${adminUser.email}`);
+  }
+
   for (const s of specifications) {
     await setDoc(doc(db, 'specifications', s.id), s);
     console.log(`  ✓ Seeded specification: ${s.title}`);
   }
 
-  // Seed features
   for (const f of features) {
     await setDoc(doc(db, 'features', f.id), f);
     console.log(`  ✓ Seeded feature: ${f.title}`);
   }
 
-  // Seed gallery
   for (const g of gallery) {
     await setDoc(doc(db, 'gallery', g.id), g);
     console.log(`  ✓ Seeded gallery item: ${g.title}`);
   }
 
-  console.log('\n✅ Firestore database successfully seeded with all live data!');
+  console.log('\nFirestore seeded.');
   process.exit(0);
 }
 
 seed().catch((err) => {
-  console.error('❌ Seeding failed:', err);
+  console.error('Seeding failed:', err);
   process.exit(1);
 });
